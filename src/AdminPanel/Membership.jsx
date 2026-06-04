@@ -20,8 +20,11 @@ const Membership = () => {
     type: "",
     role_id: "2",
     job_limit: "",
+    staff_limit: "",
     subscription_limit: "",
     extra: [{ feature: "" }],
+    extra_job_price: "",
+    extra_staff_price: "",
   });
 
   /* ================= FETCH ================= */
@@ -57,9 +60,11 @@ const Membership = () => {
           : "",
         role_id: plan.role_id ? String(plan.role_id) : "2",
         job_limit: plan.job_limit ? Number(plan.job_limit) : "",
+        staff_limit: plan.staff_limit ? Number(plan.staff_limit) : "",
         subscription_limit: plan.subscription_limit || "",
         extra: plan.extra?.length ? plan.extra : [{ feature: "" }],
         extra_job_price: plan.extra_job_price ? Number(plan.extra_job_price) : "",
+        extra_staff_price: plan.extra_staff_price ? Number(plan.extra_staff_price) : "",
       });
     } else {
       setSelectedPlan(null);
@@ -69,11 +74,13 @@ const Membership = () => {
         price: "",
         validity: "",
         type: "",
-        role_id: "",
+        role_id: "3",
         job_limit: "",
+        staff_limit: "",
         subscription_limit: "",
         extra: [{ feature: "" }],
         extra_job_price: "",
+        extra_staff_price: "",
       });
     }
   };
@@ -106,14 +113,21 @@ const Membership = () => {
       return;
     }
 
+    if (String(formData.role_id) === "3" && !formData.staff_limit) {
+      toast.warning("Staff limit is required");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
         ...formData,
         price: Number(formData.price),
         job_limit: String(formData.role_id) === "3" ? Number(formData.job_limit) : 0,
+        staff_limit: String(formData.role_id) === "3" ? Number(formData.staff_limit) : 0,
         subscription_limit: Number(formData.subscription_limit || 0),
         extra_job_price: String(formData.role_id) === "3" ? Number(formData.extra_job_price || 0) : 0,
+        extra_staff_price: String(formData.role_id) === "3" ? Number(formData.extra_staff_price || 0) : 0,
         type: formData.type.toLowerCase(),
         validity:
           formData.validity ||
@@ -205,8 +219,16 @@ const Membership = () => {
                       <span className="plan-stat-value">{Number(p.job_limit)} Jobs</span>
                     </div>
                     <div className="plan-stat-item">
+                      <span className="plan-stat-label">Staff Limit</span>
+                      <span className="plan-stat-value">{Number(p.staff_limit)} Staff</span>
+                    </div>
+                    <div className="plan-stat-item">
                       <span className="plan-stat-label">Extra Job Price</span>
                       <span className="plan-stat-value">&#8377;{Number(p.extra_job_price || 0)}</span>
+                    </div>
+                    <div className="plan-stat-item">
+                      <span className="plan-stat-label">Extra Staff Price</span>
+                      <span className="plan-stat-value">&#8377;{Number(p.extra_staff_price || 0)}</span>
                     </div>
                   </>
                 )}
@@ -321,7 +343,7 @@ const Membership = () => {
                 {String(formData.role_id) === "3" && (
                   <>
                     <div className="row">
-                      <div className="col-md-12">
+                      <div className="col-md-6">
                         <label className="premium-form-label">Job Posting Limit</label>
                         <input
                           className="form-control premium-input"
@@ -333,10 +355,22 @@ const Membership = () => {
                           }
                         />
                       </div>
+                      <div className="col-md-6">
+                        <label className="premium-form-label">Staff Addition Limit</label>
+                        <input
+                          className="form-control premium-input"
+                          placeholder="Number of staff allowed"
+                          type="number"
+                          value={formData.staff_limit}
+                          onChange={(e) =>
+                            setFormData({ ...formData, staff_limit: e.target.value })
+                          }
+                        />
+                      </div>
                     </div>
 
                     <div className="row">
-                      <div className="col-md-12">
+                      <div className="col-md-6">
                         <label className="premium-form-label">Extra Job Price (₹)</label>
                         <input
                           className="form-control premium-input"
@@ -345,6 +379,18 @@ const Membership = () => {
                           value={formData.extra_job_price}
                           onChange={(e) =>
                             setFormData({ ...formData, extra_job_price: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="premium-form-label">Extra Staff Price (₹)</label>
+                        <input
+                          className="form-control premium-input"
+                          placeholder="Price to add extra staff"
+                          type="number"
+                          value={formData.extra_staff_price}
+                          onChange={(e) =>
+                            setFormData({ ...formData, extra_staff_price: e.target.value })
                           }
                         />
                       </div>
