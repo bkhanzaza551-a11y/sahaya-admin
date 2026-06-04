@@ -100,6 +100,20 @@ const SubscriptionHistory = () => {
     return "Unknown User";
   };
 
+  const getEffectiveAmount = (sub) => {
+    const storedAmount = Number(sub?.amount || 0);
+    if (storedAmount > 0) return storedAmount;
+
+    const paymentMode = String(sub?.payment_mode || "").toLowerCase();
+    const paymentStatus = String(sub?.payment_status || "").toLowerCase();
+    const isPaidSubscription =
+      paymentMode === "razorpay" ||
+      paymentStatus === "paid" ||
+      paymentStatus === "completed";
+
+    return isPaidSubscription ? Number(sub?.subscription?.price || 0) : 0;
+  };
+
   return (
     <div className="subscription-history-card mt-4">
       <h3 className="fw-bold mb-4" style={{ color: "#1a1a1a" }}>Subscription History</h3>
@@ -145,7 +159,7 @@ const SubscriptionHistory = () => {
                     </span>
                   </td>
 
-                  <td className="fw-bold text-success">&#8377;{sub.amount}</td>
+                  <td className="fw-bold text-success">&#8377;{getEffectiveAmount(sub).toFixed(2)}</td>
 
                   <td className="text-capitalize">{sub.subscription?.type}</td>
 
