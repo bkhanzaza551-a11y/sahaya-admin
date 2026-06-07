@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import "./App.css";
 import ScrollToTop from "./Layout/ScrollToTop";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 // Auth
 import MainLogin from "./Auth/MainLogin";
 // Admin
@@ -21,22 +23,30 @@ import Addrole from "./AdminPanel/Addrole";
 import AllStaff from "./AdminPanel/AllStaff";
 import Reports from "./AdminPanel/Reports";
 import Settings from "./AdminPanel/Settings";
+import AdminUsers from "./AdminPanel/AdminUsers";
+import BlacklistManagement from "./AdminPanel/BlacklistManagement";
+import Unauthorized from "./AdminPanel/Unauthorized";
+import { hasModulePermission } from "./utiles/adminPermissions";
 
 
 // Vendor
 
+const ProtectedAdminRoute = ({ moduleKey, children }) => {
+  if (!hasModulePermission(moduleKey)) {
+    return <Unauthorized />;
+  }
+
+  return children;
+};
+
 
 const AppWrapper = () => {
-  const location = useLocation();
-
-  // Conditions
-  const isAdminLoginRoute = location.pathname === "/mainLogin";
-  const isAdminLayoutRoute = location.pathname.startsWith("/admin/");
-  const isVendorLayoutRoute = location.pathname.startsWith("/vendor/");
+  useLocation();
 
   return (
     <>
       <ScrollToTop />
+      <ToastContainer position="top-center" autoClose={2500} />
 
       <Routes>
 
@@ -46,22 +56,24 @@ const AppWrapper = () => {
 
         {/* Admin Panel */}
         <Route path="/admin/*" element={<MainLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="house-owners" element={<HouseOwners />} />
-          <Route path="staffManagement/:ownerId" element={<StaffManagement />} />
-          <Route path="allStaff" element={<AllStaff />} />
+          <Route path="dashboard" element={<ProtectedAdminRoute moduleKey="dashboard"><AdminDashboard /></ProtectedAdminRoute>} />
+          <Route path="house-owners" element={<ProtectedAdminRoute moduleKey="house_owners"><HouseOwners /></ProtectedAdminRoute>} />
+          <Route path="staffManagement/:ownerId" element={<ProtectedAdminRoute moduleKey="house_owners"><StaffManagement /></ProtectedAdminRoute>} />
+          <Route path="allStaff" element={<ProtectedAdminRoute moduleKey="staff"><AllStaff /></ProtectedAdminRoute>} />
 
-          <Route path="attendanceManagement" element={<AttendanceManagement />} />
-          <Route path="kyc" element={<AadhaarKyc />} />
-          <Route path="jobs" element={<JobPostings />} />
-          <Route path="leaves" element={<LeaveManagement />} />
-          <Route path="membership" element={<Membership />} />
-          <Route path="salary" element={<SalaryManagement />} />
-          <Route path="notifications" element={<Notifications />} />
-          <Route path="support" element={<Support />} />
-          <Route path="addrole" element={<Addrole />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="attendanceManagement" element={<ProtectedAdminRoute moduleKey="staff"><AttendanceManagement /></ProtectedAdminRoute>} />
+          <Route path="kyc" element={<ProtectedAdminRoute moduleKey="staff"><AadhaarKyc /></ProtectedAdminRoute>} />
+          <Route path="jobs" element={<ProtectedAdminRoute moduleKey="jobs"><JobPostings /></ProtectedAdminRoute>} />
+          <Route path="leaves" element={<ProtectedAdminRoute moduleKey="staff"><LeaveManagement /></ProtectedAdminRoute>} />
+          <Route path="membership" element={<ProtectedAdminRoute moduleKey="membership"><Membership /></ProtectedAdminRoute>} />
+          <Route path="salary" element={<ProtectedAdminRoute moduleKey="staff"><SalaryManagement /></ProtectedAdminRoute>} />
+          <Route path="notifications" element={<ProtectedAdminRoute moduleKey="dashboard"><Notifications /></ProtectedAdminRoute>} />
+          <Route path="support" element={<ProtectedAdminRoute moduleKey="dashboard"><Support /></ProtectedAdminRoute>} />
+          <Route path="addrole" element={<ProtectedAdminRoute moduleKey="roles"><Addrole /></ProtectedAdminRoute>} />
+          <Route path="reports" element={<ProtectedAdminRoute moduleKey="reports"><Reports /></ProtectedAdminRoute>} />
+          <Route path="blacklist" element={<ProtectedAdminRoute moduleKey="blacklist"><BlacklistManagement /></ProtectedAdminRoute>} />
+          <Route path="admin-users" element={<ProtectedAdminRoute moduleKey="sub_admins"><AdminUsers /></ProtectedAdminRoute>} />
+          <Route path="settings" element={<ProtectedAdminRoute moduleKey="settings"><Settings /></ProtectedAdminRoute>} />
 
 
         </Route>

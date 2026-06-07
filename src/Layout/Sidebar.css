@@ -15,7 +15,7 @@
     flex: 1;
     padding-top: 60px; /* header height */
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* ---------- HEADER ---------- */
@@ -344,7 +344,7 @@
     flex: 1;
     min-height: calc(100vh - 60px);
     transition: margin-left 0.3s ease;
-    overflow-x: hidden;
+    overflow: visible;
 }
 
 /* Desktop: push content when sidebar is open */

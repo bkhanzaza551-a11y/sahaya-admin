@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./Sidebar.css";
+import { hasModulePermission } from "../utiles/adminPermissions";
+import { toast } from "react-toastify";
 
 const Sidebar = ({ onLinkClick }) => {
   const location = useLocation();
@@ -9,8 +11,33 @@ const Sidebar = ({ onLinkClick }) => {
   const loginDetails = JSON.parse(localStorage.getItem("login_details")) || {};
   const email = loginDetails.email || "admin@sahayya.com";
   const role = loginDetails.role || "Admin";
+  const menuItems = useMemo(
+    () => [
+      hasModulePermission("dashboard") && ["/admin/dashboard", "fas fa-tachometer-alt", "Dashboard"],
+      hasModulePermission("house_owners") && ["/admin/house-owners", "fas fa-home", "House Owners"],
+      hasModulePermission("staff") && ["/admin/allStaff", "fas fa-users", "Staff"],
+      hasModulePermission("jobs") && ["/admin/jobs", "fas fa-briefcase", "Job Postings"],
+      hasModulePermission("roles") && ["/admin/addrole", "fas fa-user-tag", "Add Role"],
+      hasModulePermission("membership") && ["/admin/membership", "fas fa-crown", "Membership"],
+      hasModulePermission("reports") && ["/admin/reports", "fas fa-chart-bar", "Reports"],
+      hasModulePermission("blacklist") && ["/admin/blacklist", "fas fa-user-slash", "Blacklist"],
+      hasModulePermission("sub_admins") && ["/admin/admin-users", "fas fa-user-shield", "Admin Users"],
+      hasModulePermission("settings") && ["/admin/settings", "fas fa-cog", "Settings"],
+      ["/", "fas fa-sign-out-alt", "Logout"],
+    ].filter(Boolean),
+    []
+  );
 
   const handleMenuClick = (path) => {
+    if (path === "/") {
+      toast.dismiss();
+      localStorage.removeItem("token");
+      localStorage.removeItem("login_details");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("role");
+      window.location.href = "/";
+      return;
+    }
     setActivePath(path);
     onLinkClick && onLinkClick();
   };
@@ -41,15 +68,7 @@ const Sidebar = ({ onLinkClick }) => {
       {/* Nav Menu */}
       <nav className="sidebar-nav">
         <ul className="nav flex-column gap-1">
-          {navItem("/admin/dashboard", "fas fa-tachometer-alt", "Dashboard")}
-          {navItem("/admin/house-owners", "fas fa-home", "House Owners")}
-          {navItem("/admin/allStaff", "fas fa-users", "Staff")}
-          {navItem("/admin/jobs", "fas fa-briefcase", "Job Postings")}
-          {navItem("/admin/addrole", "fas fa-user-tag", "Add Role")}
-          {navItem("/admin/membership", "fas fa-crown", "Membership")}
-          {/* {navItem("/admin/reports", "fas fa-chart-bar", "Reports")} */}
-          {navItem("/admin/settings", "fas fa-cog", "Settings")}
-          {navItem("/", "fas fa-sign-out-alt", "Logout")}
+          {menuItems.map(([to, icon, label]) => navItem(to, icon, label))}
         </ul>
       </nav>
 

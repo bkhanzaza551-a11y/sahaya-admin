@@ -4,6 +4,36 @@ body {
   font-family: 'General Sans', sans-serif !important;
 }
 
+.modal {
+  z-index: 1300 !important;
+}
+
+.modal-backdrop {
+  z-index: 1290 !important;
+}
+
+.modal.show {
+  padding-top: 24px;
+}
+
+.admin-detail-modal {
+  padding-top: 72px !important;
+}
+
+.admin-detail-modal .admin-detail-dialog {
+  margin-top: 0 !important;
+  max-width: min(1200px, calc(100vw - 32px));
+}
+
+.admin-detail-modal .modal-content {
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
+}
+
+.admin-detail-modal .modal-body {
+  overflow-y: auto;
+}
+
 .modal-content {
   /* background-color: transparent !important; */
   border: 0 !important;

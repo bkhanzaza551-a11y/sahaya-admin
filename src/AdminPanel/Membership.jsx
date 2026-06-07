@@ -53,18 +53,18 @@ const Membership = () => {
       setFormData({
         subscription_name: plan.subscription_name || "",
         description: plan.description || "",
-        price: plan.price || "",
-        validity: plan.validity || "",
+        price: plan.price ?? "",
+        validity: plan.validity ?? "",
         type: plan.type
           ? plan.type.charAt(0).toUpperCase() + plan.type.slice(1)
           : "",
         role_id: plan.role_id ? String(plan.role_id) : "2",
-        job_limit: plan.job_limit ? Number(plan.job_limit) : "",
-        staff_limit: plan.staff_limit ? Number(plan.staff_limit) : "",
-        subscription_limit: plan.subscription_limit || "",
+        job_limit: plan.job_limit ?? "",
+        staff_limit: plan.staff_limit ?? "",
+        subscription_limit: plan.subscription_limit ?? "",
         extra: plan.extra?.length ? plan.extra : [{ feature: "" }],
-        extra_job_price: plan.extra_job_price ? Number(plan.extra_job_price) : "",
-        extra_staff_price: plan.extra_staff_price ? Number(plan.extra_staff_price) : "",
+        extra_job_price: plan.extra_job_price ?? "",
+        extra_staff_price: plan.extra_staff_price ?? "",
       });
     } else {
       setSelectedPlan(null);
@@ -108,12 +108,18 @@ const Membership = () => {
       return;
     }
 
-    if (String(formData.role_id) === "3" && !formData.job_limit) {
+    if (
+      String(formData.role_id) === "3" &&
+      (formData.job_limit === "" || formData.job_limit === null || formData.job_limit === undefined)
+    ) {
       toast.warning("Job limit is required");
       return;
     }
 
-    if (String(formData.role_id) === "3" && !formData.staff_limit) {
+    if (
+      String(formData.role_id) === "3" &&
+      (formData.staff_limit === "" || formData.staff_limit === null || formData.staff_limit === undefined)
+    ) {
       toast.warning("Staff limit is required");
       return;
     }

@@ -105,6 +105,18 @@ const Addrole = () => {
           border-color: #D98C7A !important;
           color: white !important;
         }
+        .sahayya-btn-primary:hover {
+          background-color: #c77d6d !important;
+          border-color: #c77d6d !important;
+        }
+        .role-add-btn {
+          min-width: 180px;
+          min-height: 52px;
+          border-radius: 14px !important;
+          font-size: 1rem;
+          font-weight: 700;
+          box-shadow: 0 10px 24px rgba(217, 140, 122, 0.24);
+        }
       `}</style>
 
       {/* HEADER */}
@@ -112,7 +124,7 @@ const Addrole = () => {
         <h2 className="fw-bold">Role Management</h2>
 
         <button
-          className="btn sahayya-btn-primary"
+          className="btn sahayya-btn-primary role-add-btn px-4"
           data-bs-toggle="modal"
           data-bs-target="#addRoleModal"
         >

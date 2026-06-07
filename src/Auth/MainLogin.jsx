@@ -94,13 +94,12 @@
 
 
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { BASE_URL } from "../utiles/baseUrl";
 import axiosInstance from "../utiles/axiosInstance";
+import { getDefaultAdminRoute } from "../utiles/adminPermissions";
 
 
 
@@ -111,6 +110,10 @@ const MainLogin = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        toast.dismiss();
+    }, []);
 
 
     const handleLogin = async (e) => {
@@ -137,12 +140,12 @@ const MainLogin = () => {
                 localStorage.setItem("token", token);
                 localStorage.setItem("login_details", JSON.stringify(user));
                 localStorage.setItem("user_id", user.id);
-                localStorage.setItem("role", "admin");
+                localStorage.setItem("role", user.role || "Admin");
 
                 toast.success(res.data.msg);
 
                 setTimeout(() => {
-                    navigate("/admin/dashboard");
+                    navigate(getDefaultAdminRoute());
                 }, 1200);
             }
 
@@ -201,9 +204,6 @@ const MainLogin = () => {
                     </form>
                 </div>
             </div>
-
-            <ToastContainer position="top-center" autoClose={2000} />
-
         </div>
     );
 };

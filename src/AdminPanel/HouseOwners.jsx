@@ -288,6 +288,8 @@ const HouseOwners = () => {
   const [owners, setOwners] = useState([]);
   const [filteredOwners, setFilteredOwners] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState(null);
+  const [ownerViewLoading, setOwnerViewLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -350,6 +352,51 @@ const HouseOwners = () => {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const getOwnerName = (owner) =>
+    `${owner?.first_name || ""} ${owner?.last_name || ""}`.trim() || owner?.name || "House Owner";
+
+  const getAddress = (owner) => {
+    const primaryAddress = owner?.addresses?.[0] || {};
+    return {
+      street: primaryAddress?.street || owner?.current_street || "-",
+      city: primaryAddress?.city || owner?.current_city || "-",
+      state: primaryAddress?.state || owner?.current_state || "-",
+      pincode: primaryAddress?.pincode || owner?.current_pincode || "-",
+    };
+  };
+
+  const getHouseholdInfo = (owner) => owner?.household_information || owner?.householdInformation || {};
+  const getPetDetails = (owner) => owner?.pet_details || owner?.petDetails || [];
+
+  const formatValue = (value) => {
+    if (Array.isArray(value)) {
+      const cleaned = value.filter(Boolean);
+      return cleaned.length ? cleaned.join(", ") : "-";
+    }
+
+    if (value === null || value === undefined || value === "") {
+      return "-";
+    }
+
+    return value;
+  };
+
+  const openOwnerDetails = async (owner) => {
+    try {
+      setOwnerViewLoading(true);
+      setSelectedOwner(owner);
+      const res = await axiosInstance.get(`/admin/houseowners/${owner.id}`);
+
+      if (res.data.success) {
+        setSelectedOwner(res.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setOwnerViewLoading(false);
     }
   };
 
@@ -427,6 +474,15 @@ const HouseOwners = () => {
                       </Link>
 
                       <button
+                        className="btn btn-sm btn-outline-secondary me-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewOwnerModal"
+                        onClick={() => openOwnerDetails(owner)}
+                      >
+                        View Details
+                      </button>
+
+                      <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => handleDeleteOwner(owner.id)}
                       >
@@ -484,6 +540,153 @@ const HouseOwners = () => {
             </nav>
           </div>
         )}
+      </div>
+
+      <div className="modal fade admin-detail-modal" id="viewOwnerModal" tabIndex="-1">
+        <div className="modal-dialog modal-xl modal-dialog-scrollable admin-detail-dialog">
+          <div className="modal-content border-0 rounded-4">
+            <div className="modal-header border-0">
+              <h5 className="modal-title fw-bold">House Owner Details</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div className="modal-body px-4 pb-4">
+              {selectedOwner ? (
+                ownerViewLoading ? (
+                  <div className="text-center py-4">Loading full owner details...</div>
+                ) : (
+                  <div className="row g-4">
+                    <div className="col-md-3 text-center">
+                      <img
+                        src={selectedOwner.image || "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg"}
+                        alt="House Owner"
+                        className="rounded-circle border mb-3"
+                        width="120"
+                        height="120"
+                        style={{ objectFit: "cover" }}
+                      />
+                      <h5 className="fw-bold mb-1">{getOwnerName(selectedOwner)}</h5>
+                      <small className="text-muted">House Owner</small>
+                    </div>
+
+                    <div className="col-md-9">
+                      <div className="row g-3">
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Phone</small>
+                          <div className="fw-semibold">{formatValue(selectedOwner.phone_number)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Email</small>
+                          <div className="fw-semibold">{formatValue(selectedOwner.email)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Date of Birth</small>
+                          <div className="fw-semibold">{formatValue(selectedOwner.dob || selectedOwner.date_of_birth)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Gender</small>
+                          <div className="fw-semibold">{formatValue(selectedOwner.gender)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Status</small>
+                          <div className="fw-semibold text-capitalize">{formatValue(selectedOwner.status)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Exact Location</small>
+                          <div className="fw-semibold">{formatValue(selectedOwner.exact_location || selectedOwner.location)}</div>
+                        </div>
+                      </div>
+
+                      <hr className="my-4" />
+
+                      <h6 className="fw-bold mb-3">Address Details</h6>
+                      <div className="row g-3">
+                        <div className="col-md-12">
+                          <small className="text-muted d-block">Street</small>
+                          <div className="fw-semibold">{formatValue(getAddress(selectedOwner).street)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">City</small>
+                          <div className="fw-semibold">{formatValue(getAddress(selectedOwner).city)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">State</small>
+                          <div className="fw-semibold">{formatValue(getAddress(selectedOwner).state)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Pincode</small>
+                          <div className="fw-semibold">{formatValue(getAddress(selectedOwner).pincode)}</div>
+                        </div>
+                      </div>
+
+                      <hr className="my-4" />
+
+                      <h6 className="fw-bold mb-3">Household Details</h6>
+                      <div className="row g-3">
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Residence Type</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.residence_type)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Rooms</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.number_of_rooms)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Languages Spoken</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.languages_spoken)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Adults</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.adults_count)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Children</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.children_count)}</div>
+                        </div>
+                        <div className="col-md-4">
+                          <small className="text-muted d-block">Elderly</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.elderly_count)}</div>
+                        </div>
+                        <div className="col-md-12">
+                          <small className="text-muted d-block">Special Requirements</small>
+                          <div className="fw-semibold">{formatValue(getHouseholdInfo(selectedOwner)?.special_requirements)}</div>
+                        </div>
+                      </div>
+
+                      <hr className="my-4" />
+
+                      <h6 className="fw-bold mb-3">Pet Details</h6>
+                      {getPetDetails(selectedOwner).length > 0 ? (
+                        <div className="row g-3">
+                          {getPetDetails(selectedOwner).map((pet, index) => (
+                            <div className="col-md-6" key={`${pet?.pet_type || "pet"}-${index}`}>
+                              <div className="border rounded-3 p-3 h-100">
+                                <small className="text-muted d-block">Pet Type</small>
+                                <div className="fw-semibold mb-2">{formatValue(pet?.pet_type)}</div>
+                                <small className="text-muted d-block">Pet Count</small>
+                                <div className="fw-semibold">{formatValue(pet?.pet_count)}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-muted">No pet details available.</div>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="text-muted">Select an owner to view details.</div>
+              )}
+            </div>
+
+            <div className="modal-footer border-0 pt-0">
+              <button type="button" className="btn btn-light" data-bs-dismiss="modal">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -12,19 +12,17 @@ import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
+const formatCurrency = (value) => `₹${Number(value || 0).toFixed(2)}`;
+
 const Reports = () => {
   const [filter, setFilter] = useState("monthly");
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ================= FETCH REPORT =================
   const fetchReport = async (type) => {
     try {
       setLoading(true);
-
-      const res = await axiosInstance.post("/admin/report", {
-        type: type,
-      });
+      const res = await axiosInstance.post("/admin/report", { type });
 
       if (res.data.status === "success") {
         setReportData(res.data.data);
@@ -40,23 +38,21 @@ const Reports = () => {
     fetchReport(filter);
   }, [filter]);
 
-  // ================= CHART DATA =================
+  const revenuePoints = reportData?.chartdata?.revenue_overview || [];
+
   const chartData = {
     labels:
-      reportData?.chartdata?.revenue_overview?.length > 0
-        ? reportData.chartdata.revenue_overview.map((item) => item.label)
+      revenuePoints.length > 0
+        ? revenuePoints.map((item) => item.label)
         : filter === "monthly"
-        ? ["Week 1", "Week 2", "Week 3", "Week 4"]
-        : ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-
+          ? ["Week 1", "Week 2", "Week 3", "Week 4"]
+          : ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     datasets: [
       {
         label: "Revenue (₹)",
         data:
-          reportData?.chartdata?.revenue_overview?.length > 0
-            ? reportData.chartdata.revenue_overview.map(
-                (item) => item.amount
-              )
+          revenuePoints.length > 0
+            ? revenuePoints.map((item) => item.revenue ?? item.amount ?? 0)
             : [0, 0, 0, 0],
         backgroundColor: "#D98C7A",
         borderRadius: 6,
@@ -74,12 +70,11 @@ const Reports = () => {
         }
       `}</style>
 
-      {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="fw-bold mb-0">Reports</h2>
           <small className="text-muted">
-            Business overview based on staff, jobs & revenue
+            Business overview based on staff, jobs and revenue
           </small>
         </div>
 
@@ -97,85 +92,64 @@ const Reports = () => {
         <div className="text-center py-5">Loading Report...</div>
       ) : reportData ? (
         <>
-          {/* SUMMARY CARDS */}
           <div className="row g-4 mb-4">
             <div className="col-md-3">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Total House Owners</small>
-                <h4 className="fw-bold mt-2">
-                  {reportData.house_owner_count}
-                </h4>
+                <h4 className="fw-bold mt-2">{reportData.house_owner_count}</h4>
               </div>
             </div>
 
             <div className="col-md-3">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Total Staff</small>
-                <h4 className="fw-bold mt-2">
-                  {reportData.staff_count}
-                </h4>
+                <h4 className="fw-bold mt-2">{reportData.staff_count}</h4>
               </div>
             </div>
 
             <div className="col-md-3">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Total Jobs</small>
-                <h4 className="fw-bold mt-2">
-                  {reportData.job_count}
-                </h4>
+                <h4 className="fw-bold mt-2">{reportData.job_count}</h4>
               </div>
             </div>
 
             <div className="col-md-3">
               <div className="card sahayya-card p-3">
-                <small className="text-muted">
-                  {filter === "monthly"
-                    ? "Membership Revenue"
-                    : "Membership Revenue"}
-                </small>
+                <small className="text-muted">Membership Revenue</small>
                 <h4 className="fw-bold mt-2">
-                  ₹{reportData.member_subscription_revenue}
+                  {formatCurrency(reportData.member_subscription_revenue)}
                 </h4>
               </div>
             </div>
           </div>
 
-          {/* EXTRA CARDS */}
           <div className="row g-4 mb-4">
             <div className="col-md-4">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Salary Paid</small>
-                <h5 className="fw-bold mt-2">
-                  ₹{reportData.member_salary_paid}
-                </h5>
+                <h5 className="fw-bold mt-2">{formatCurrency(reportData.member_salary_paid)}</h5>
               </div>
             </div>
 
             <div className="col-md-4">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Present Attendance</small>
-                <h5 className="fw-bold mt-2">
-                  {reportData.present_attendance_count}
-                </h5>
+                <h5 className="fw-bold mt-2">{reportData.present_attendance_count}</h5>
               </div>
             </div>
 
             <div className="col-md-4">
               <div className="card sahayya-card p-3">
                 <small className="text-muted">Overall Attendance Rate</small>
-                <h5 className="fw-bold mt-2">
-                  {reportData.overall_attendance_rate}%
-                </h5>
+                <h5 className="fw-bold mt-2">{reportData.overall_attendance_rate}%</h5>
               </div>
             </div>
           </div>
 
-          {/* CHART */}
           <div className="card sahayya-card p-4">
             <h6 className="fw-bold mb-3">
-              {filter === "monthly"
-                ? "Monthly Revenue Overview"
-                : "Yearly Revenue Overview"}
+              {filter === "monthly" ? "Monthly Revenue Overview" : "Yearly Revenue Overview"}
             </h6>
             <Bar data={chartData} />
           </div>
