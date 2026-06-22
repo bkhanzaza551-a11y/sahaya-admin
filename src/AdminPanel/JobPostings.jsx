@@ -9,6 +9,9 @@ const JobPostings = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [owners, setOwners] = useState([]);
   const [jobDetailsLoading, setJobDetailsLoading] = useState(false);
+  const [jobApplications, setJobApplications] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [selectedJobIdForApps, setSelectedJobIdForApps] = useState(null);
 
   const fetchJobs = async () => {
     try {
@@ -93,6 +96,34 @@ const JobPostings = () => {
       toast.error(error?.response?.data?.message || "Failed to load job details");
     } finally {
       setJobDetailsLoading(false);
+    }
+  };
+
+  const openJobApplications = async (jobId) => {
+    try {
+      setApplicationsLoading(true);
+      setJobApplications([]);
+      setSelectedJobIdForApps(jobId);
+      const response = await axiosInstance.get(`/admin/jobs/${jobId}/applications`);
+      if (response?.data?.status === "success" || response?.data?.success) {
+        setJobApplications(response.data.data.data || response.data.data || []);
+      }
+    } catch (error) {
+      toast.error("Failed to load applications");
+    } finally {
+      setApplicationsLoading(false);
+    }
+  };
+
+  const updateApplicationStatus = async (appId, status) => {
+    try {
+      const response = await axiosInstance.post(`/admin/applications/${appId}/status`, { status });
+      if (response?.data?.status === "success" || response?.data?.success) {
+        toast.success("Status updated");
+        openJobApplications(selectedJobIdForApps);
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -192,29 +223,40 @@ const JobPostings = () => {
                       {job.status}
                     </span>
                   </td>
-                  <td className="text-end">
-                    <button
-                      className="btn btn-sm btn-outline-secondary me-2"
-                      data-bs-toggle="modal"
-                      data-bs-target="#viewJobModal"
-                      onClick={() => openJobDetails(job.id)}
-                    >
-                      View
-                    </button>
+                  <td>
+                    <div className="d-flex justify-content-end gap-2 flex-wrap">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewJobModal"
+                        onClick={() => openJobDetails(job.id)}
+                      >
+                        View
+                      </button>
 
-                    <button
-                      className="btn btn-sm btn-outline-warning me-2"
-                      onClick={() => changeStatus(job)}
-                    >
-                      {job.status === "active" ? "Pause" : "Activate"}
-                    </button>
+                      <button
+                        className="btn btn-sm btn-outline-info"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewApplicationsModal"
+                        onClick={() => openJobApplications(job.id)}
+                      >
+                        Applications
+                      </button>
 
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => deleteJob(job.id)}
-                    >
-                      Delete
-                    </button>
+                      <button
+                        className="btn btn-sm btn-outline-warning"
+                        onClick={() => changeStatus(job)}
+                      >
+                        {job.status === "active" ? "Pause" : "Activate"}
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => deleteJob(job.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -283,9 +325,79 @@ const JobPostings = () => {
             </div>
           </div>
         </div>
+
+        {/* Applications Modal */}
+        <div className="modal fade" id="viewApplicationsModal">
+          <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div className="modal-content border-0 rounded-4">
+              <div className="modal-header">
+                <h5 className="modal-title fw-bold">Job Applications</h5>
+                <button className="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+
+              <div className="modal-body px-4">
+                {applicationsLoading ? (
+                  <div className="text-center py-4">Loading applications...</div>
+                ) : jobApplications.length === 0 ? (
+                  <div className="text-center py-4 text-muted">No applications found for this job.</div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Applicant Name</th>
+                          <th>Cover Letter</th>
+                          <th>Date Applied</th>
+                          <th>Status</th>
+                          <th className="text-end">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {jobApplications.map((app) => (
+                          <tr key={app.id}>
+                            <td className="fw-bold">{app.user?.name || app.user?.first_name || "Unknown"}</td>
+                            <td>{app.cover_letter ? (app.cover_letter.substring(0, 50) + '...') : "-"}</td>
+                            <td>{new Date(app.created_at).toLocaleDateString()}</td>
+                            <td>
+                              <span className={`badge ${
+                                app.status === 'accepted' || app.status === 'hired' ? 'bg-success' :
+                                app.status === 'rejected' ? 'bg-danger' :
+                                'bg-warning text-dark'
+                              }`}>
+                                {app.status || "pending"}
+                              </span>
+                            </td>
+                            <td className="text-end">
+                              <button 
+                                className="btn btn-sm btn-success me-2"
+                                onClick={() => updateApplicationStatus(app.id, 'accepted')}
+                                disabled={app.status === 'accepted' || app.status === 'hired'}
+                              >
+                                Accept
+                              </button>
+                              <button 
+                                className="btn btn-sm btn-danger"
+                                onClick={() => updateApplicationStatus(app.id, 'rejected')}
+                                disabled={app.status === 'rejected'}
+                              >
+                                Reject
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
 };
 
 export default JobPostings;
+

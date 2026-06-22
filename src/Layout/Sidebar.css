@@ -270,10 +270,7 @@
     box-shadow: 0 4px 12px rgba(2, 71, 41, 0.25);
 }
 
-.active-link .sidebar-icon i {
-    color: #fff !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-}
+.active-link .sidebar-icon { background: rgba(255, 255, 255, 0.2) !important; } .active-link .sidebar-icon i { background: none !important; -webkit-text-fill-color: #fff !important; color: #fff !important; }
 
 .sidebar-icon {
     display: flex;
@@ -432,3 +429,4 @@
         font-size: 1rem !important;
     }
 }
+

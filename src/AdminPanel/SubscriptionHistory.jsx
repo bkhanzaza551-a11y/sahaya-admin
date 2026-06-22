@@ -25,6 +25,19 @@ const SubscriptionHistory = () => {
     }
   };
 
+  const handleRefund = async (id) => {
+    if (!window.confirm("Are you sure you want to refund this subscription?")) return;
+    try {
+      const res = await axiosInstance.post(`/admin/subscriptionuser/${id}/refund`);
+      if (res.data.status) {
+        alert("Refunded successfully");
+        fetchSubscriptions();
+      }
+    } catch (error) {
+      alert("Failed to process refund");
+    }
+  };
+
   // ================= FETCH OWNERS =================
   const fetchOwners = async () => {
     try {
@@ -129,6 +142,7 @@ const SubscriptionHistory = () => {
               <th>Start Date</th>
               <th>End Date</th>
               <th>Status</th>
+              <th>Action</th>
             </tr>
           </thead>
 
@@ -180,6 +194,13 @@ const SubscriptionHistory = () => {
                     >
                       {sub.status}
                     </span>
+                  </td>
+                  <td>
+                    {sub.payment_status === 'completed' || sub.payment_status === 'paid' ? (
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleRefund(sub.id)}>Refund</button>
+                    ) : (
+                      <span className="text-muted small">{sub.payment_status || "N/A"}</span>
+                    )}
                   </td>
                 </tr>
               ))

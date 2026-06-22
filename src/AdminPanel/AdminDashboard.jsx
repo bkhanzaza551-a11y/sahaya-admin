@@ -22,6 +22,7 @@ import {
   FileText,
   Wallet,
   CheckCircle2,
+  ShieldCheck,
   RefreshCw,
   LayoutDashboard,
 } from "lucide-react";
@@ -258,8 +259,9 @@ const AdminDashboard = () => {
         <div style={s.cardGrid}>
           <StatCard icon={Users}        label="Total Staff"         value={fmt(stats.total_staff)}                       sub="Active members"       accent={C.primary} />
           <StatCard icon={Building2}    label="Total Employers"     value={fmt(stats.total_employers)}                   sub="Registered companies" accent="#7c3aed" />
-          <StatCard icon={TrendingUp}   label="New Subscriptions"   value={fmt(stats.new_subscriptions_this_month)}      sub="This month"           accent="#0284c7" />
+          <StatCard icon={TrendingUp}   label="Active Memberships"  value={fmt(stats.active_memberships ?? 0)}           sub="Currently active"     accent="#0284c7" />
           <StatCard icon={IndianRupee}  label="Monthly Revenue"     value={fmtCurrency(stats.subscription_revenue_this_month)} sub="Subscription income" accent={C.accent} />
+          <StatCard icon={ShieldCheck}  label="Pending Verifications" value={fmt(stats.pending_verifications ?? 0)}      sub="Needs review"         accent="#dc2626" />
         </div>
 
         {/* ── Line Charts ── */}

@@ -1,15 +1,53 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../utiles/axiosInstance';
+import { toast } from 'react-toastify';
 
 const AadhaarKyc = () => {
-  // Static Dummy Data
-  const kycList = [
-    { id: 1, staffName: "Raju Prasad", maskedAadhaar: "XXXX XXXX 1234", status: "Pending", date: "2026-01-20" },
-    { id: 2, staffName: "Sunita Bai", maskedAadhaar: "XXXX XXXX 5678", status: "Verified", date: "2026-01-18" },
-    { id: 3, staffName: "Manoj Singh", maskedAadhaar: "XXXX XXXX 9012", status: "Rejected", date: "2026-01-15" },
-  ];
+  const [kycList, setKycList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedKyc, setSelectedKyc] = useState(null);
+
+  const fetchKycList = async (page = 1, status = "all") => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(`/admin/kyc/list`, {
+        params: { page, status }
+      });
+      if (response.data.success) {
+        setKycList(response.data.data.data);
+        setPagination(response.data.data);
+        setCurrentPage(response.data.data.current_page);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch KYC list");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchKycList(1, statusFilter);
+  }, [statusFilter]);
+
+  const updateStatus = async (id, newStatus) => {
+    try {
+      const res = await axiosInstance.post(`/admin/kyc/${id}/status`, { status: newStatus });
+      if (res.data.success) {
+        toast.success(`KYC status updated to ${newStatus}`);
+        fetchKycList(currentPage, statusFilter);
+        const modal = window.bootstrap?.Modal?.getInstance(document.getElementById("viewKycModal"));
+        modal?.hide();
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
 
   return (
-    <div className="container-fluid p-4" style={{  minHeight: '100vh' }}>
+    <div className="container-fluid p-4" style={{ minHeight: '100vh' }}>
       <style>{`
         .sahayya-btn-primary {
           background-color: #D98C7A !important;
@@ -35,8 +73,8 @@ const AadhaarKyc = () => {
 
       {/* Page Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">Aadhaar KYC Verification</h2>
-        <button className="btn sahayya-btn-primary px-4">
+        <h2 className="fw-bold">Aadhaar & KYC Verification</h2>
+        <button className="btn sahayya-btn-primary px-4" onClick={() => fetchKycList(currentPage, statusFilter)}>
           <i className="bi bi-arrow-repeat me-2"></i>Refresh List
         </button>
       </div>
@@ -46,17 +84,15 @@ const AadhaarKyc = () => {
         
         {/* Search + Filter Row */}
         <div className="row g-3 mb-4">
-          <div className="col-md-4">
-            <div className="input-group">
-              <span className="input-group-text bg-white border-end-0"><i className="bi bi-search"></i></span>
-              <input type="text" className="form-control border-start-0" placeholder="Search by staff name..." />
-            </div>
-          </div>
           <div className="col-md-2">
-            <select className="form-select">
-              <option value="">All Status</option>
+            <select 
+              className="form-select" 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="all">All Status</option>
               <option value="pending">Pending</option>
-              <option value="verified">Verified</option>
+              <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>
@@ -67,79 +103,151 @@ const AadhaarKyc = () => {
           <table className="table sahayya-table align-middle">
             <thead>
               <tr>
-                <th>Staff Name</th>
-                <th>Masked Aadhaar</th>
+                <th>User Name</th>
+                <th>Role</th>
                 <th>Submission Date</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {kycList.map((kyc) => (
-                <tr key={kyc.id}>
-                  <td className="fw-bold">{kyc.staffName}</td>
-                  <td className="text-muted font-monospace">{kyc.maskedAadhaar}</td>
-                  <td>{kyc.date}</td>
-                  <td>
-                    <span className={`badge rounded-pill ${
-                      kyc.status === 'Verified' ? 'bg-success-subtle text-success' : 
-                      kyc.status === 'Pending' ? 'bg-warning-subtle text-warning' : 
-                      'bg-danger-subtle text-danger'
-                    }`}>
-                      {kyc.status}
-                    </span>
-                  </td>
-                  <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#viewKycModal">
-                      View Documents
-                    </button>
-                    <button className="btn btn-sm btn-success me-2"><i className="bi bi-check-lg"></i></button>
-                    <button className="btn btn-sm btn-danger"><i className="bi bi-x-lg"></i></button>
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                <tr><td colSpan="5" className="text-center">Loading...</td></tr>
+              ) : kycList.length === 0 ? (
+                <tr><td colSpan="5" className="text-center">No KYC records found.</td></tr>
+              ) : (
+                kycList.map((kyc) => (
+                  <tr key={kyc.id}>
+                    <td className="fw-bold">{kyc.user?.name || kyc.user?.first_name || "Unknown"}</td>
+                    <td>{kyc.user?.role_id == 3 ? "Staff" : "Home Owner"}</td>
+                    <td>{new Date(kyc.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <span className={`badge rounded-pill ${
+                        kyc.status === 'approved' ? 'bg-success-subtle text-success' : 
+                        kyc.status === 'pending' ? 'bg-warning-subtle text-warning' : 
+                        'bg-danger-subtle text-danger'
+                      }`}>
+                        {String(kyc.status).toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="text-end">
+                      <button 
+                        className="btn btn-sm btn-outline-secondary me-2" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#viewKycModal"
+                        onClick={() => setSelectedKyc(kyc)}
+                      >
+                        View Documents
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
-        <div className="d-flex justify-content-between align-items-center mt-4">
-          <span className="text-muted small">Showing 1 to 3 of 3 submissions</span>
-          <nav>
-            <ul className="pagination pagination-sm mb-0">
-              <li className="page-item disabled"><span className="page-link">Previous</span></li>
-              <li className="page-item active"><span className="page-link" style={{backgroundColor: '#D98C7A', borderColor: '#D98C7A'}}>1</span></li>
-              <li className="page-item"><span className="page-link text-dark">Next</span></li>
-            </ul>
-          </nav>
-        </div>
+        {pagination?.last_page > 1 && (
+          <div className="d-flex justify-content-end mt-4">
+            <nav>
+              <ul className="pagination pagination-sm mb-0">
+                {[...Array(pagination.last_page)].map((_, i) => (
+                  <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                    <button 
+                      className="page-link" 
+                      onClick={() => fetchKycList(i + 1, statusFilter)}
+                      style={currentPage === i + 1 ? {backgroundColor: '#D98C7A', borderColor: '#D98C7A', color: 'white'} : {color: '#333'}}
+                    >
+                      {i + 1}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        )}
       </div>
 
-      {/* View KYC Modal UI (Static) */}
+      {/* View KYC Modal UI */}
       <div className="modal fade" id="viewKycModal" tabIndex="-1">
-        <div className="modal-dialog modal-lg modal-dialog-centered">
+        <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
           <div className="modal-content border-0" style={{ borderRadius: '15px' }}>
-            <div className="modal-header border-0">
-              <h5 className="modal-title fw-bold">Aadhaar Document Preview</h5>
+            <div className="modal-header border-0 pb-0">
+              <h5 className="modal-title fw-bold">KYC Documents Preview</h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div className="modal-body text-center bg-light m-3 rounded">
-              <div className="p-5 border border-dashed text-muted">
-                <i className="bi bi-file-earmark-person display-1 d-block mb-3"></i>
-                <p>Aadhaar Front/Back Image Preview Area</p>
-                <small>(Static Placeholder)</small>
+            {selectedKyc && (
+              <div className="modal-body m-3 pt-0">
+                <div className="mb-4">
+                  <h6>User Details:</h6>
+                  <p className="small text-muted mb-1"><strong>Name:</strong> {selectedKyc.user?.name}</p>
+                  <p className="small text-muted mb-1"><strong>Email:</strong> {selectedKyc.user?.email || '-'}</p>
+                  <p className="small text-muted mb-1"><strong>Phone:</strong> {selectedKyc.user?.phone_number || '-'}</p>
+                </div>
+                
+                <h6 className="mb-3 border-bottom pb-2">Uploaded Documents:</h6>
+                <div className="row g-4">
+                  {selectedKyc.aadhaar_front_path && (
+                    <div className="col-md-6">
+                      <div className="border p-2 rounded text-center">
+                        <span className="d-block mb-2 text-muted small fw-bold">Aadhaar Front</span>
+                        <img src={selectedKyc.aadhaar_front_path} className="img-fluid rounded" alt="Aadhaar Front" style={{maxHeight: '200px', objectFit: 'contain'}} />
+                      </div>
+                    </div>
+                  )}
+                  {selectedKyc.aadhaar_back_path && (
+                    <div className="col-md-6">
+                      <div className="border p-2 rounded text-center">
+                        <span className="d-block mb-2 text-muted small fw-bold">Aadhaar Back</span>
+                        <img src={selectedKyc.aadhaar_back_path} className="img-fluid rounded" alt="Aadhaar Back" style={{maxHeight: '200px', objectFit: 'contain'}} />
+                      </div>
+                    </div>
+                  )}
+                  {selectedKyc.photo_path && (
+                    <div className="col-md-6">
+                      <div className="border p-2 rounded text-center">
+                        <span className="d-block mb-2 text-muted small fw-bold">Profile Photo</span>
+                        <img src={selectedKyc.photo_path} className="img-fluid rounded" alt="Photo" style={{maxHeight: '200px', objectFit: 'contain'}} />
+                      </div>
+                    </div>
+                  )}
+                  {selectedKyc.police_verification_path && (
+                    <div className="col-md-6">
+                      <div className="border p-2 rounded text-center h-100 d-flex flex-column justify-content-center">
+                        <span className="d-block mb-2 text-muted small fw-bold">Police Verification</span>
+                        {selectedKyc.police_verification_path.endsWith('.pdf') ? (
+                          <a href={selectedKyc.police_verification_path} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm mx-auto">View PDF Document</a>
+                        ) : (
+                          <img src={selectedKyc.police_verification_path} className="img-fluid rounded" alt="Police Verification" style={{maxHeight: '200px', objectFit: 'contain'}} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {(!selectedKyc.aadhaar_front_path && !selectedKyc.aadhaar_back_path && !selectedKyc.photo_path && !selectedKyc.police_verification_path) && (
+                    <div className="col-12 text-center text-muted py-4">No documents uploaded.</div>
+                  )}
+                </div>
               </div>
-              <div className="mt-3 text-start px-3">
-                <h6>Verification Details:</h6>
-                <p className="small text-muted mb-1"><strong>Name on Card:</strong> RAJU PRASAD</p>
-                <p className="small text-muted mb-1"><strong>DOB:</strong> 01-01-1985</p>
-                <p className="small text-muted"><strong>Address:</strong> 123, Sample Street, New Delhi</p>
-              </div>
-            </div>
-            <div className="modal-footer border-0">
-              <button type="button" className="btn btn-danger me-auto">Reject</button>
+            )}
+            <div className="modal-footer border-0 bg-light rounded-bottom">
+              <button 
+                type="button" 
+                className="btn btn-outline-danger me-auto"
+                onClick={() => updateStatus(selectedKyc.id, 'rejected')}
+                disabled={selectedKyc?.status === 'rejected'}
+              >
+                Reject KYC
+              </button>
               <button type="button" className="btn btn-light" data-bs-dismiss="modal">Close</button>
-              <button type="button" className="btn sahayya-btn-primary">Approve Verification</button>
+              <button 
+                type="button" 
+                className="btn sahayya-btn-primary"
+                onClick={() => updateStatus(selectedKyc.id, 'approved')}
+                disabled={selectedKyc?.status === 'approved'}
+              >
+                Approve Verification
+              </button>
             </div>
           </div>
         </div>

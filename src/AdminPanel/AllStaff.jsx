@@ -2,6 +2,105 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "../utiles/axiosInstance";
 import { toast } from "react-toastify";
 
+const defaultStaffForm = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone_number: "",
+  dob: "",
+  gender: "",
+  status: "active",
+  occupation: "",
+  service_category: "",
+  exact_location: "",
+  current_city: "",
+  current_state: "",
+  current_pincode: "",
+  salary: "",
+  pay_frequency: "",
+  primary_role: "",
+  preferred_work_location: "",
+  stay_type: "",
+  relation: "",
+};
+
+const formatValue = (value) => {
+  if (Array.isArray(value)) {
+    const cleaned = value.filter(Boolean);
+    return cleaned.length ? cleaned.join(", ") : "-";
+  }
+
+  return value === null || value === undefined || value === "" ? "-" : value;
+};
+
+const getStaffName = (staff) =>
+  staff?.first_name && staff?.last_name
+    ? `${staff.first_name} ${staff.last_name}`
+    : staff?.name || "-";
+
+const getPrimaryAddress = (staff) => {
+  const address = staff?.addresses?.[0] || {};
+  return {
+    street: address.street || address.locality || staff?.current_street || staff?.permanent_street || "-",
+    city: address.city || staff?.current_city || staff?.permanent_city || "-",
+    state: address.state || staff?.current_state || staff?.permanent_state || "-",
+    pincode: address.pincode || staff?.current_pincode || staff?.permanent_pincode || "-",
+  };
+};
+
+const getWorkInfo = (staff) => staff?.user_work_info || staff?.userWorkInfo || {};
+const getKycInfo = (staff) => staff?.kyc_information || staff?.kycInformation || {};
+const getLastExperience = (staff) => staff?.last_exp || staff?.lastExp || {};
+
+const buildStaffForm = (staff) => {
+  const workInfo = getWorkInfo(staff);
+
+  return {
+    first_name: staff?.first_name || "",
+    last_name: staff?.last_name || "",
+    email: staff?.email || "",
+    phone_number: staff?.phone_number || "",
+    dob: staff?.date_of_birth || staff?.dob || "",
+    gender: staff?.gender || "",
+    status: staff?.status || "active",
+    occupation: staff?.occupation || workInfo?.primary_role || "",
+    service_category: staff?.service_category || workInfo?.service_category || "",
+    exact_location: staff?.exact_location || staff?.location || getPrimaryAddress(staff)?.street || "",
+    current_city: staff?.current_city || "",
+    current_state: staff?.current_state || "",
+    current_pincode: staff?.current_pincode || "",
+    salary: workInfo?.salary || staff?.salary || "",
+    pay_frequency: workInfo?.pay_frequency || staff?.pay_frequency || "",
+    primary_role: workInfo?.primary_role || staff?.occupation || "",
+    preferred_work_location: workInfo?.preferred_work_location || staff?.preferred_work_location || "",
+    stay_type: workInfo?.stay_type || staff?.stay_type || "",
+    relation: staff?.relation || workInfo?.relation || "",
+  };
+};
+
+const getPhone = (staff) => {
+  const prefix = staff?.phone_number_country_code || staff?.phone_number_prefix || staff?.country_code || "";
+  const number = staff?.phone_number || staff?.mobile_number || staff?.mobile || staff?.contact_number || "";
+  const combined = `${prefix}${number}`.trim();
+  return combined || "-";
+};
+
+const getGenderLabel = (staff) => {
+  const raw = String(staff?.gender || "").trim().toLowerCase();
+  if (raw === "m") return "Male";
+  if (raw === "f") return "Female";
+  if (raw === "o") return "Other";
+  return formatValue(staff?.gender);
+};
+
+const getCurrentSubscription = (staff) => staff?.current_subscription || null;
+
+const getCreditBalance = (staff) => {
+  const wallet = Number(staff?.wallet || 0);
+  const referral = Number(staff?.referral_earnings || 0);
+  return wallet + referral;
+};
+
 const AllStaff = () => {
   const [staffList, setStaffList] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -11,6 +110,9 @@ const AllStaff = () => {
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [staffForm, setStaffForm] = useState(defaultStaffForm);
+  const [staffEditMode, setStaffEditMode] = useState(false);
+  const [staffSaving, setStaffSaving] = useState(false);
 
   const fetchStaff = async (page = 1, searchTerm = "") => {
     try {
@@ -42,98 +144,90 @@ const AllStaff = () => {
     fetchStaff(1, value);
   };
 
-  const getStaffName = (staff) =>
-    staff?.first_name && staff?.last_name
-      ? `${staff.first_name} ${staff.last_name}`
-      : staff?.name || "-";
+  const openStaffDetails = async (staff) => {
+    try {
+      setViewLoading(true);
+      setStaffEditMode(false);
+      setSelectedStaff(staff);
+      setStaffForm(buildStaffForm(staff));
+      const res = await axiosInstance.get(`/admin/staff/${staff.id}`);
 
-  const getPrimaryAddress = (staff) => {
-    const address = staff?.addresses?.[0] || {};
-    return {
-      street: address.street || address.locality || staff?.current_street || staff?.permanent_street || "-",
-      city: address.city || staff?.current_city || staff?.permanent_city || "-",
-      state: address.state || staff?.current_state || staff?.permanent_state || "-",
-      pincode: address.pincode || staff?.current_pincode || staff?.permanent_pincode || "-",
-    };
-  };
-
-  const getWorkInfo = (staff) => staff?.user_work_info || staff?.userWorkInfo || {};
-  const getKycInfo = (staff) => staff?.kyc_information || staff?.kycInformation || {};
-  const getLastExperience = (staff) => staff?.last_exp || staff?.lastExp || {};
-
-  const formatValue = (value) => {
-    if (Array.isArray(value)) {
-      const cleaned = value.filter(Boolean);
-      return cleaned.length ? cleaned.join(", ") : "-";
+      if (res.data.success) {
+        setSelectedStaff(res.data.data);
+        setStaffForm(buildStaffForm(res.data.data));
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to load full staff profile");
+    } finally {
+      setViewLoading(false);
     }
+  };
 
-    if (value === null || value === undefined || value === "") {
-      return "-";
+  const saveStaffUpdate = async () => {
+    if (!selectedStaff?.id) return;
+
+    try {
+      setStaffSaving(true);
+      const res = await axiosInstance.put(`/admin/staff/${selectedStaff.id}`, staffForm);
+
+      if (res?.data?.success) {
+        setSelectedStaff(res.data.data);
+        setStaffForm(buildStaffForm(res.data.data));
+        setStaffEditMode(false);
+        toast.success("Staff updated successfully");
+        fetchStaff(currentPage, search);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Failed to update staff");
+    } finally {
+      setStaffSaving(false);
     }
-
-    return value;
   };
 
-  const getPhone = (staff) => {
-    const prefix = staff?.phone_number_country_code || staff?.phone_number_prefix || staff?.country_code || "";
-    const number =
-      staff?.phone_number ||
-      staff?.mobile_number ||
-      staff?.mobile ||
-      staff?.contact_number ||
-      staff?.emergency_contact_number ||
-      "";
-    const combined = `${prefix}${number}`.trim();
-    return combined || "-";
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return;
+    try {
+      await axiosInstance.delete(`/admin/staff/${deleteTargetId}`);
+      toast.success("Staff deleted successfully");
+      setDeleteTargetId(null);
+      fetchStaff(currentPage, search);
+      const modal = window.bootstrap?.Modal?.getInstance(document.getElementById("deleteModal"));
+      modal?.hide();
+    } catch (error) {
+      console.log(error);
+      toast.error("Delete failed");
+    }
   };
 
-  const getGenderLabel = (staff) => {
-    const raw = String(staff?.gender || "").trim().toLowerCase();
-    if (raw === "m") return "Male";
-    if (raw === "f") return "Female";
-    if (raw === "o") return "Other";
-    return formatValue(staff?.gender);
+  const changeStatus = async (staff) => {
+    const newStatus = staff.status === "active" ? "block" : "active";
+    try {
+      await axiosInstance.put(`/admin/staff/${staff.id}/status`, { status: newStatus });
+      toast.success("Status updated");
+      fetchStaff(currentPage, search);
+    } catch (error) {
+      console.log(error);
+      toast.error("Status update failed");
+    }
   };
 
-  const getPrimaryRole = (staff) => {
-    const workInfo = getWorkInfo(staff);
+  const renderDocumentCard = (item) => {
+    const isPdf = String(item.url).toLowerCase().includes(".pdf");
+
     return (
-      workInfo?.primary_role ||
-      staff?.occupation ||
-      staff?.service_category ||
-      staff?.role ||
-      getLastExperience(staff)?.role ||
-      "-"
+      <div className="col-md-6 mb-3" key={item.label}>
+        <div className="border rounded-3 p-3 h-100">
+          <strong className="d-block mb-2">{item.label}</strong>
+          {isPdf ? (
+            <a href={item.url} target="_blank" rel="noreferrer">View Document</a>
+          ) : (
+            <img src={item.url} className="img-fluid border rounded d-block" alt={item.label} />
+          )}
+        </div>
+      </div>
     );
-  };
-
-  const getPreferredLocation = (staff) => {
-    const workInfo = getWorkInfo(staff);
-    return (
-      workInfo?.preferred_work_location ||
-      staff?.preferred_work_location ||
-      staff?.exact_location ||
-      staff?.current_city ||
-      "-"
-    );
-  };
-
-  const getSalaryFrequency = (staff) => {
-    const workInfo = getWorkInfo(staff);
-    return {
-      salary: workInfo?.salary || staff?.salary || "-",
-      payFrequency: workInfo?.pay_frequency || staff?.pay_frequency || "-",
-    };
-  };
-
-  const getSkills = (staff) => {
-    const workInfo = getWorkInfo(staff);
-    return workInfo?.skills || staff?.skills || staff?.service_category || "-";
-  };
-
-  const getLanguages = (staff) => {
-    const workInfo = getWorkInfo(staff);
-    return workInfo?.languages_spoken || staff?.languages_spoken || staff?.language || "-";
   };
 
   const getDocumentItems = (staff) => {
@@ -151,10 +245,7 @@ const AllStaff = () => {
       },
       {
         label: "Police Verification",
-        url:
-          kyc?.police_verification_path ||
-          staff?.verification_certificate ||
-          workInfo?.verification_certificate,
+        url: kyc?.police_verification_path || staff?.verification_certificate || workInfo?.verification_certificate,
       },
       {
         label: "Staff Photo",
@@ -163,67 +254,23 @@ const AllStaff = () => {
     ].filter((item) => item.url);
   };
 
-  const openStaffDetails = async (staff) => {
-    try {
-      setViewLoading(true);
-      setSelectedStaff(staff);
-      const res = await axiosInstance.get(`/admin/staff/${staff.id}`);
+  const renderField = (label, key, value, type = "text") => (
+    <div className="col-md-4">
+      <small className="text-muted d-block">{label}</small>
+      {staffEditMode ? (
+        <input
+          type={type}
+          className="form-control"
+          value={staffForm[key] || ""}
+          onChange={(event) => setStaffForm((prev) => ({ ...prev, [key]: event.target.value }))}
+        />
+      ) : (
+        <div className="fw-semibold">{formatValue(value)}</div>
+      )}
+    </div>
+  );
 
-      if (res.data.success) {
-        setSelectedStaff(res.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to load full staff profile");
-    } finally {
-      setViewLoading(false);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTargetId) return;
-    try {
-      await axiosInstance.delete(`/admin/staff/${deleteTargetId}`);
-      toast.success("Staff deleted successfully");
-      setDeleteTargetId(null);
-      fetchStaff(currentPage, search);
-      const modal = window.bootstrap?.Modal?.getInstance(document.getElementById("deleteModal"));
-      modal?.hide();
-    } catch (error) {
-      console.log("Delete error:", error);
-      toast.error("Delete failed: " + (error?.response?.data?.message || "Server error"));
-    }
-  };
-
-  const changeStatus = async (staff) => {
-    const newStatus = staff.status === "active" ? "block" : "active";
-    try {
-      await axiosInstance.put(`/admin/staff/${staff.id}/status`, { status: newStatus });
-      toast.success("Status updated");
-      fetchStaff(currentPage, search);
-    } catch (error) {
-      toast.error("Status update failed");
-    }
-  };
-
-  const renderDocumentCard = (item) => {
-    const isPdf = String(item.url).toLowerCase().includes(".pdf");
-
-    return (
-      <div className="col-md-6 mb-3" key={item.label}>
-        <div className="border rounded-3 p-3 h-100">
-          <strong className="d-block mb-2">{item.label}</strong>
-          {isPdf ? (
-            <a href={item.url} target="_blank" rel="noreferrer">
-              View Document
-            </a>
-          ) : (
-            <img src={item.url} className="img-fluid border rounded d-block" alt={item.label} />
-          )}
-        </div>
-      </div>
-    );
-  };
+  const currentSubscription = getCurrentSubscription(selectedStaff);
 
   return (
     <div className="container-fluid p-4">
@@ -273,13 +320,13 @@ const AllStaff = () => {
                         width="40"
                         height="40"
                         className="rounded-circle border"
-                        alt=""
+                        alt="Staff"
                         onError={(e) => { e.target.src = "https://via.placeholder.com/40"; }}
                       />
                     </td>
                     <td>{getStaffName(staff)}</td>
                     <td>{staff.email || "-"}</td>
-                    <td>{(staff.phone_number_country_code || "") + (staff.phone_number || "-")}</td>
+                    <td>{getPhone(staff)}</td>
                     <td>{staff.aadhar_number || "-"}</td>
                     <td>
                       <span className={`badge ${staff.aadhar__verify ? "bg-success" : "bg-danger"}`}>
@@ -291,31 +338,33 @@ const AllStaff = () => {
                         {staff.status || "active"}
                       </span>
                     </td>
-                    <td className="text-end">
-                      <button
-                        className="btn btn-sm btn-outline-secondary me-2"
-                        data-bs-toggle="modal"
-                        data-bs-target="#viewModal"
-                        onClick={() => openStaffDetails(staff)}
-                      >
-                        View
-                      </button>
+                    <td>
+                      <div className="d-flex justify-content-end gap-2">
+                        <button
+                          className="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#viewModal"
+                          onClick={() => openStaffDetails(staff)}
+                        >
+                          View
+                        </button>
 
-                      <button
-                        className="btn btn-sm btn-outline-warning me-2"
-                        onClick={() => changeStatus(staff)}
-                      >
-                        {staff.status === "active" ? "Block" : "Activate"}
-                      </button>
+                        <button
+                          className="btn btn-sm btn-outline-warning"
+                          onClick={() => changeStatus(staff)}
+                        >
+                          {staff.status === "active" ? "Block" : "Activate"}
+                        </button>
 
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        data-bs-toggle="modal"
-                        data-bs-target="#deleteModal"
-                        onClick={() => setDeleteTargetId(staff.id)}
-                      >
-                        Delete
-                      </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteModal"
+                          onClick={() => setDeleteTargetId(staff.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -328,7 +377,7 @@ const AllStaff = () => {
           <div className="d-flex justify-content-end mt-3">
             <ul className="pagination mb-0">
               {[...Array(pagination.last_page)].map((_, i) => (
-                <li key={i} className={`page-item ${currentPage === i + 1 && "active"}`}>
+                <li key={i} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
                   <button className="page-link" onClick={() => fetchStaff(i + 1, search)}>
                     {i + 1}
                   </button>
@@ -339,169 +388,191 @@ const AllStaff = () => {
         )}
       </div>
 
-      <div className="modal fade admin-detail-modal" id="viewModal" tabIndex="-1">
-        <div className="modal-dialog modal-xl modal-dialog-scrollable admin-detail-dialog">
+      <div className="modal fade" id="viewModal" tabIndex="-1">
+        <div className="modal-dialog modal-xl modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title">Staff Profile</h5>
+              <div>
+                <h5 className="modal-title fw-bold mb-1">Staff Profile</h5>
+                <small className="text-muted">Edit profile, review membership and credit balance</small>
+              </div>
               <button className="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             {selectedStaff && (
               <div className="modal-body">
                 {viewLoading ? (
                   <div className="text-center py-4">Loading full staff details...</div>
                 ) : (
-                  <>
-                    <div className="row mb-4 align-items-center">
-                      <div className="col-md-2 text-center">
-                        <img
-                          src={selectedStaff.image || "https://via.placeholder.com/90"}
-                          width="90"
-                          height="90"
-                          className="rounded-circle border"
-                          alt=""
-                          onError={(e) => { e.target.src = "https://via.placeholder.com/90"; }}
-                        />
-                      </div>
-                      <div className="col-md-10">
-                        <h4 className="mb-1">{getStaffName(selectedStaff)}</h4>
-                        <p className="text-muted mb-1">{selectedStaff.email || "No email"}</p>
-                        <p className="text-muted mb-0">Phone: {getPhone(selectedStaff)}</p>
+                  <div className="row g-4">
+                    <div className="col-lg-4">
+                      <div className="border rounded-4 p-4 h-100">
+                        <div className="text-center mb-4">
+                          <img
+                            src={selectedStaff.image || "https://via.placeholder.com/90"}
+                            width="90"
+                            height="90"
+                            className="rounded-circle border mb-3"
+                            alt="Staff"
+                            onError={(e) => { e.target.src = "https://via.placeholder.com/90"; }}
+                          />
+                          <h4 className="mb-1">{getStaffName(selectedStaff)}</h4>
+                          <p className="text-muted mb-0">{selectedStaff.email || "No email"}</p>
+                        </div>
+
+                        <div className="border rounded-3 p-3 mb-3 bg-light">
+                          <small className="text-muted d-block">Current Membership</small>
+                          <div className="fw-bold">
+                            {currentSubscription?.subscription?.subscription_name || "No active membership"}
+                          </div>
+                          <small className="text-muted">
+                            {currentSubscription?.end_date
+                              ? `Valid till ${new Date(currentSubscription.end_date).toLocaleDateString()}`
+                              : "Not available"}
+                          </small>
+                        </div>
+
+                        <div className="border rounded-3 p-3 bg-light">
+                          <small className="text-muted d-block">Credit Balance</small>
+                          <div className="fw-bold">Rs. {getCreditBalance(selectedStaff).toFixed(2)}</div>
+                          <small className="text-muted">
+                            Wallet: Rs. {Number(selectedStaff?.wallet || 0).toFixed(2)} | Referral: Rs. {Number(selectedStaff?.referral_earnings || 0).toFixed(2)}
+                          </small>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="row g-4">
-                      <div className="col-lg-6">
-                        <table className="table table-sm table-bordered">
-                          <tbody>
-                            <tr>
-                              <th>Aadhaar No.</th>
-                              <td>{selectedStaff.aadhar_number || "-"}</td>
-                            </tr>
-                            <tr>
-                              <th>Aadhaar Verified</th>
-                              <td>
-                                <span className={`badge ${selectedStaff.aadhar__verify ? "bg-success" : "bg-danger"}`}>
-                                  {selectedStaff.aadhar__verify ? "Verified" : "Not Verified"}
-                                </span>
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Gender</th>
-                              <td>{getGenderLabel(selectedStaff)}</td>
-                            </tr>
-                            <tr>
-                              <th>Date of Birth</th>
-                              <td>{formatValue(selectedStaff.date_of_birth || selectedStaff.dob)}</td>
-                            </tr>
-                            <tr>
-                              <th>Status</th>
-                              <td className="text-capitalize">{formatValue(selectedStaff.status || "active")}</td>
-                            </tr>
-                            <tr>
-                              <th>About</th>
-                              <td>{formatValue(selectedStaff.about_me)}</td>
-                            </tr>
-                            <tr>
-                              <th>Emergency Contact</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.emergency_contact_name)} / {formatValue(getWorkInfo(selectedStaff)?.emergency_contact_number)}</td>
-                            </tr>
-                            <tr>
-                              <th>UPI ID</th>
-                              <td>{formatValue(selectedStaff.upi_id)}</td>
-                            </tr>
-                            <tr>
-                              <th>Education</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.education)}</td>
-                            </tr>
-                            <tr>
-                              <th>Additional Info</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.additional_info)}</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                    <div className="col-lg-8">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h6 className="fw-bold mb-0">Profile Information</h6>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${staffEditMode ? "btn-outline-secondary" : "btn-outline-primary"}`}
+                            onClick={() => {
+                              setStaffEditMode((prev) => !prev);
+                              setStaffForm(buildStaffForm(selectedStaff));
+                            }}
+                          >
+                            {staffEditMode ? "Cancel Edit" : "Edit User"}
+                          </button>
+                          {staffEditMode ? (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-success"
+                              onClick={saveStaffUpdate}
+                              disabled={staffSaving}
+                            >
+                              {staffSaving ? "Saving..." : "Save Changes"}
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
 
-                      <div className="col-lg-6">
-                        <table className="table table-sm table-bordered">
-                          <tbody>
-                            <tr>
-                              <th>City / State</th>
-                              <td>{formatValue(getPrimaryAddress(selectedStaff).city)} / {formatValue(getPrimaryAddress(selectedStaff).state)}</td>
-                            </tr>
-                            <tr>
-                              <th>Street / Pincode</th>
-                              <td>{formatValue(getPrimaryAddress(selectedStaff).street)} / {formatValue(getPrimaryAddress(selectedStaff).pincode)}</td>
-                            </tr>
-                            <tr>
-                              <th>Primary Role</th>
-                              <td>{formatValue(getPrimaryRole(selectedStaff))}</td>
-                            </tr>
-                            <tr>
-                              <th>Preferred Work Location</th>
-                              <td>{formatValue(getPreferredLocation(selectedStaff))}</td>
-                            </tr>
-                            <tr>
-                              <th>Salary / Pay Frequency</th>
-                              <td>{formatValue(getSalaryFrequency(selectedStaff).salary)} / {formatValue(getSalaryFrequency(selectedStaff).payFrequency)}</td>
-                            </tr>
-                            <tr>
-                              <th>Experience</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.total_experience || selectedStaff?.years_of_experience)}</td>
-                            </tr>
-                            <tr>
-                              <th>Skills</th>
-                              <td>{formatValue(getSkills(selectedStaff))}</td>
-                            </tr>
-                            <tr>
-                              <th>Languages</th>
-                              <td>{formatValue(getLanguages(selectedStaff))}</td>
-                            </tr>
-                            <tr>
-                              <th>Working Days</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.working_days || selectedStaff?.working_days)}</td>
-                            </tr>
-                            <tr>
-                              <th>Joining Date</th>
-                              <td>{formatValue(getWorkInfo(selectedStaff)?.joining_date)}</td>
-                            </tr>
-                            <tr>
-                              <th>Voice Note</th>
-                              <td>
-                                {getWorkInfo(selectedStaff)?.voice_note ? (
-                                  <a href={getWorkInfo(selectedStaff).voice_note} target="_blank" rel="noreferrer">
-                                    Open Voice Note
-                                  </a>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                            </tr>
-                            <tr>
-                              <th>Last Experience</th>
-                              <td>
-                                {formatValue(getLastExperience(selectedStaff)?.role)}
-                                {getLastExperience(selectedStaff)?.owner_name ? ` with ${getLastExperience(selectedStaff).owner_name}` : ""}
-                                {getLastExperience(selectedStaff)?.city ? `, ${getLastExperience(selectedStaff).city}` : ""}
-                                {getLastExperience(selectedStaff)?.state ? `, ${getLastExperience(selectedStaff).state}` : ""}
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
+                      <div className="row g-3">
+                        {renderField("First Name", "first_name", selectedStaff.first_name)}
+                        {renderField("Last Name", "last_name", selectedStaff.last_name)}
+                        {renderField("Email", "email", selectedStaff.email, "email")}
+                        {renderField("Phone", "phone_number", selectedStaff.phone_number)}
+                        {renderField("Date of Birth", "dob", selectedStaff.date_of_birth || selectedStaff.dob)}
+                        {renderField("Gender", "gender", getGenderLabel(selectedStaff))}
+                        {renderField("Status", "status", selectedStaff.status)}
+                        {renderField("Occupation", "occupation", selectedStaff.occupation || getWorkInfo(selectedStaff)?.primary_role)}
+                        {renderField("Service Category", "service_category", selectedStaff.service_category || getWorkInfo(selectedStaff)?.service_category)}
+                        {renderField("Primary Role", "primary_role", getWorkInfo(selectedStaff)?.primary_role || selectedStaff.occupation)}
+                        {renderField("Salary", "salary", getWorkInfo(selectedStaff)?.salary || selectedStaff.salary, "number")}
+                        {renderField("Pay Frequency", "pay_frequency", getWorkInfo(selectedStaff)?.pay_frequency || selectedStaff.pay_frequency)}
+                        {renderField("Preferred Work Location", "preferred_work_location", getWorkInfo(selectedStaff)?.preferred_work_location || selectedStaff.preferred_work_location)}
+                        {renderField("Stay Type", "stay_type", getWorkInfo(selectedStaff)?.stay_type || selectedStaff.stay_type)}
+                        {renderField("Exact Location", "exact_location", selectedStaff.exact_location || selectedStaff.location || getPrimaryAddress(selectedStaff).street)}
+                        {renderField("City", "current_city", getPrimaryAddress(selectedStaff).city)}
+                        {renderField("State", "current_state", getPrimaryAddress(selectedStaff).state)}
+                        {renderField("Pincode", "current_pincode", getPrimaryAddress(selectedStaff).pincode)}
+                        {renderField("Emergency Contact Relation", "relation", selectedStaff.relation || getWorkInfo(selectedStaff)?.relation)}
                       </div>
+
+                      <hr className="my-4" />
+
+                      <div className="row g-4">
+                        <div className="col-lg-6">
+                          <table className="table table-sm table-bordered mb-0">
+                            <tbody>
+                              <tr>
+                                <th>Aadhaar No.</th>
+                                <td>{selectedStaff.aadhar_number || "-"}</td>
+                              </tr>
+                              <tr>
+                                <th>Aadhaar Verified</th>
+                                <td>
+                                  <span className={`badge ${selectedStaff.aadhar__verify ? "bg-success" : "bg-danger"}`}>
+                                    {selectedStaff.aadhar__verify ? "Verified" : "Not Verified"}
+                                  </span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <th>Emergency Contact</th>
+                                <td>{formatValue(getWorkInfo(selectedStaff)?.emergency_contact_name)} / {formatValue(getWorkInfo(selectedStaff)?.emergency_contact_number || selectedStaff?.contact_number)}</td>
+                              </tr>
+                              <tr>
+                                <th>UPI ID</th>
+                                <td>{formatValue(selectedStaff.upi_id)}</td>
+                              </tr>
+                              <tr>
+                                <th>Availability</th>
+                                <td>{selectedStaff?.is_available ? "Available" : "Not Available"}</td>
+                              </tr>
+                              <tr>
+                                <th>Job Seeking</th>
+                                <td>{selectedStaff?.is_job_seeking ? "Yes" : "No"}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="col-lg-6">
+                          <table className="table table-sm table-bordered mb-0">
+                            <tbody>
+                              <tr>
+                                <th>Street</th>
+                                <td>{formatValue(getPrimaryAddress(selectedStaff).street)}</td>
+                              </tr>
+                              <tr>
+                                <th>Skills</th>
+                                <td>{formatValue(getWorkInfo(selectedStaff)?.skills || selectedStaff?.skills)}</td>
+                              </tr>
+                              <tr>
+                                <th>Languages</th>
+                                <td>{formatValue(getWorkInfo(selectedStaff)?.languages_spoken || selectedStaff?.languages_spoken)}</td>
+                              </tr>
+                              <tr>
+                                <th>Working Days</th>
+                                <td>{formatValue(getWorkInfo(selectedStaff)?.working_days || selectedStaff?.working_days)}</td>
+                              </tr>
+                              <tr>
+                                <th>Joining Date</th>
+                                <td>{formatValue(getWorkInfo(selectedStaff)?.joining_date || getLastExperience(selectedStaff)?.join_date)}</td>
+                              </tr>
+                              <tr>
+                                <th>Last Experience</th>
+                                <td>{formatValue(getLastExperience(selectedStaff)?.role)}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <h6 className="mt-4 mb-3 fw-bold">Uploaded Documents</h6>
+                      {getDocumentItems(selectedStaff).length === 0 ? (
+                        <div className="alert alert-warning py-2 mb-0">
+                          No documents uploaded by this staff member.
+                        </div>
+                      ) : (
+                        <div className="row">
+                          {getDocumentItems(selectedStaff).map(renderDocumentCard)}
+                        </div>
+                      )}
                     </div>
-
-                    <h6 className="mt-4 mb-3 fw-bold">Uploaded Documents</h6>
-                    {getDocumentItems(selectedStaff).length === 0 ? (
-                      <div className="alert alert-warning py-2 mb-0">
-                        No documents uploaded by this staff member.
-                      </div>
-                    ) : (
-                      <div className="row">
-                        {getDocumentItems(selectedStaff).map(renderDocumentCard)}
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
               </div>
             )}
