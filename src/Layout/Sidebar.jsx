@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./Sidebar.css";
 import { hasModulePermission } from "../utiles/adminPermissions";
@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 const Sidebar = ({ onLinkClick }) => {
   const location = useLocation();
-  const [activePath, setActivePath] = useState(location.pathname);
+  const activePath = location.pathname;
 
   const loginDetails = JSON.parse(localStorage.getItem("login_details")) || {};
   const email = loginDetails.email || "admin@sahayya.com";
@@ -19,10 +19,13 @@ const Sidebar = ({ onLinkClick }) => {
       hasModulePermission("jobs") && ["/admin/jobs", "fas fa-briefcase", "Job Postings"],
       hasModulePermission("roles") && ["/admin/addrole", "fas fa-user-tag", "Add Role"],
       hasModulePermission("membership") && ["/admin/membership", "fas fa-crown", "Membership"],
+      hasModulePermission("staff") && ["/admin/salary", "fas fa-money-check-dollar", "Salary Payouts"],
       hasModulePermission("reports") && ["/admin/reports", "fas fa-chart-bar", "Reports"],
       hasModulePermission("blacklist") && ["/admin/blacklist", "fas fa-user-slash", "Blacklist"],
       hasModulePermission("sub_admins") && ["/admin/admin-users", "fas fa-user-shield", "Admin Users"],
       hasModulePermission("settings") && ["/admin/settings", "fas fa-cog", "Settings"],
+      hasModulePermission("settings") && ["/admin/legal-consents", "fas fa-file-signature", "Legal Consents"],
+
       ["/", "fas fa-sign-out-alt", "Logout"],
     ].filter(Boolean),
     []
@@ -38,7 +41,6 @@ const Sidebar = ({ onLinkClick }) => {
       window.location.href = "/";
       return;
     }
-    setActivePath(path);
     onLinkClick && onLinkClick();
   };
 

@@ -37,7 +37,11 @@ export const getAdminPermissions = () => {
   const details = getAdminDetails();
   const permissions = Array.isArray(details?.permissions) ? details.permissions : [];
 
-  if (!details?.is_admin_panel_user || permissions.length === 0) {
+  if (!details?.is_admin_panel_user) {
+    return DEFAULT_ADMIN_PERMISSIONS;
+  }
+
+  if (permissions.length === 0) {
     return DEFAULT_ADMIN_PERMISSIONS;
   }
 

@@ -74,7 +74,7 @@ const Membership = () => {
         price: "",
         validity: "",
         type: "",
-        role_id: "3",
+        role_id: "2",
         job_limit: "",
         staff_limit: "",
         subscription_limit: "",
@@ -152,7 +152,7 @@ const Membership = () => {
         toast.success("Plan created successfully");
       }
 
-      const modal = window.bootstrap.Modal.getInstance(
+      const modal = window.bootstrap?.Modal?.getInstance(
         document.getElementById("planModal")
       );
       modal?.hide();

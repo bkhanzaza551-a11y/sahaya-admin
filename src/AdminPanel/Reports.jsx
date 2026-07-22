@@ -168,10 +168,10 @@ const Reports = () => {
             <div className="col-lg-5">
               <div className="card p-4 h-100" style={cardStyle}>
                 <h6 className="fw-bold mb-3">Job Posting Report</h6>
-                <div style={{ maxWidth: 260, margin: "0 auto" }}>
+                <div style={{ width: "100%", height: 260, display: "flex", justifyContent: "center", margin: "0 auto" }}>
                   <Doughnut
                     data={jobPostingChartData}
-                    options={{ responsive: true, plugins: { legend: { position: "bottom" } } }}
+                    options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom" } } }}
                   />
                 </div>
                 <div className="row text-center mt-4 g-3">

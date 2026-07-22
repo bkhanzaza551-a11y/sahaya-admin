@@ -12,7 +12,10 @@ const defaultStaffForm = {
   status: "active",
   occupation: "",
   service_category: "",
-  exact_location: "",
+  area_locality: "",
+  google_location: "",
+  lat: "",
+  long: "",
   current_city: "",
   current_state: "",
   current_pincode: "",
@@ -45,6 +48,10 @@ const getPrimaryAddress = (staff) => {
     city: address.city || staff?.current_city || staff?.permanent_city || "-",
     state: address.state || staff?.current_state || staff?.permanent_state || "-",
     pincode: address.pincode || staff?.current_pincode || staff?.permanent_pincode || "-",
+    area_locality: address.area_locality || staff?.area_locality || "-",
+    google_location: address.google_location || staff?.google_location || "-",
+    lat: address.lat || address.latitude || staff?.lat || "-",
+    long: address.long || address.longitude || staff?.long || "-",
   };
 };
 
@@ -65,10 +72,13 @@ const buildStaffForm = (staff) => {
     status: staff?.status || "active",
     occupation: staff?.occupation || workInfo?.primary_role || "",
     service_category: staff?.service_category || workInfo?.service_category || "",
-    exact_location: staff?.exact_location || staff?.location || getPrimaryAddress(staff)?.street || "",
-    current_city: staff?.current_city || "",
-    current_state: staff?.current_state || "",
-    current_pincode: staff?.current_pincode || "",
+    area_locality: staff?.area_locality || getPrimaryAddress(staff).area_locality || "",
+    google_location: staff?.google_location || getPrimaryAddress(staff).google_location || "",
+    lat: staff?.lat || getPrimaryAddress(staff).lat || "",
+    long: staff?.long || getPrimaryAddress(staff).long || "",
+    current_city: staff?.current_city || getPrimaryAddress(staff).city || "",
+    current_state: staff?.current_state || getPrimaryAddress(staff).state || "",
+    current_pincode: staff?.current_pincode || getPrimaryAddress(staff).pincode || "",
     salary: workInfo?.salary || staff?.salary || "",
     pay_frequency: workInfo?.pay_frequency || staff?.pay_frequency || "",
     primary_role: workInfo?.primary_role || staff?.occupation || "",
@@ -316,12 +326,12 @@ const AllStaff = () => {
                   <tr key={staff.id}>
                     <td>
                       <img
-                        src={staff.image || "https://via.placeholder.com/40"}
+                        src={staff.image || "https://ui-avatars.com/api/?name=Staff&background=random"}
                         width="40"
                         height="40"
                         className="rounded-circle border"
                         alt="Staff"
-                        onError={(e) => { e.target.src = "https://via.placeholder.com/40"; }}
+                        onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Staff&background=random"; }}
                       />
                     </td>
                     <td>{getStaffName(staff)}</td>
@@ -409,12 +419,12 @@ const AllStaff = () => {
                       <div className="border rounded-4 p-4 h-100">
                         <div className="text-center mb-4">
                           <img
-                            src={selectedStaff.image || "https://via.placeholder.com/90"}
+                            src={selectedStaff.image || "https://ui-avatars.com/api/?name=Staff&background=random"}
                             width="90"
                             height="90"
                             className="rounded-circle border mb-3"
                             alt="Staff"
-                            onError={(e) => { e.target.src = "https://via.placeholder.com/90"; }}
+                            onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Staff&background=random"; }}
                           />
                           <h4 className="mb-1">{getStaffName(selectedStaff)}</h4>
                           <p className="text-muted mb-0">{selectedStaff.email || "No email"}</p>
@@ -484,7 +494,10 @@ const AllStaff = () => {
                         {renderField("Pay Frequency", "pay_frequency", getWorkInfo(selectedStaff)?.pay_frequency || selectedStaff.pay_frequency)}
                         {renderField("Preferred Work Location", "preferred_work_location", getWorkInfo(selectedStaff)?.preferred_work_location || selectedStaff.preferred_work_location)}
                         {renderField("Stay Type", "stay_type", getWorkInfo(selectedStaff)?.stay_type || selectedStaff.stay_type)}
-                        {renderField("Exact Location", "exact_location", selectedStaff.exact_location || selectedStaff.location || getPrimaryAddress(selectedStaff).street)}
+                        {renderField("Area / Locality", "area_locality", selectedStaff.area_locality || getPrimaryAddress(selectedStaff).area_locality)}
+                        {renderField("Google Location URL", "google_location", selectedStaff.google_location || getPrimaryAddress(selectedStaff).google_location)}
+                        {renderField("Latitude", "lat", selectedStaff.lat || getPrimaryAddress(selectedStaff).lat)}
+                        {renderField("Longitude", "long", selectedStaff.long || getPrimaryAddress(selectedStaff).long)}
                         {renderField("City", "current_city", getPrimaryAddress(selectedStaff).city)}
                         {renderField("State", "current_state", getPrimaryAddress(selectedStaff).state)}
                         {renderField("Pincode", "current_pincode", getPrimaryAddress(selectedStaff).pincode)}

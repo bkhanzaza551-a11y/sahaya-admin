@@ -1,15 +1,98 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-toastify';
+import axiosInstance from '../utiles/axiosInstance';
+
+const initialFilters = {
+  name: '',
+  month: '',
+  status: '',
+};
+
+const ACTIVE_PAYOUT_STATUSES = ['initiated', 'queued', 'pending', 'processing', 'processed', 'sent'];
 
 const SalaryManagement = () => {
-  // Static Dummy Data
-  const salaries = [
-    { id: 1,houseOwner: "Abhtab", staff: "Raju Prasad", role: "Driver", month: "January 2026", amount: "₹18,000", status: "Paid", date: "2026-01-05" },
-    { id: 2,houseOwner: "Abhtab", staff: "Sunita Bai", role: "Cook", month: "January 2026", amount: "₹12,000", status: "Paid", date: "2026-01-05" },
-    { id: 3,houseOwner: "Abhtab", staff: "Manoj Singh", role: "Security", month: "January 2026", amount: "₹15,000", status: "Paid", date: "2026-01-05" },
-  ];
+  const [filters, setFilters] = useState(initialFilters);
+  const [pageData, setPageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [payoutingId, setPayoutingId] = useState(null);
+  const [selectedSalary, setSelectedSalary] = useState(null);
+
+  const salaries = useMemo(() => pageData?.data || [], [pageData]);
+
+  const fetchSalaries = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.name) params.set('name', filters.name);
+      if (filters.month) params.set('month', filters.month);
+      if (filters.status) params.set('status', filters.status);
+
+      const response = await axiosInstance.get(`/admin/salary${params.toString() ? `?${params.toString()}` : ''}`);
+      setPageData(response.data?.data || null);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to load salaries.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSalaries();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getLatestPayout = (salary) => {
+    const payouts = salary?.payouts || [];
+    return Array.isArray(payouts) && payouts.length ? payouts[0] : null;
+  };
+
+  const getStaffBankAccount = (salary) => {
+    const bankAccounts = salary?.staff?.bank_accounts || salary?.staff?.bankAccounts || [];
+    if (!Array.isArray(bankAccounts) || bankAccounts.length === 0) return null;
+    return bankAccounts.find((account) => Number(account.is_set) === 1) || bankAccounts[0];
+  };
+
+  const maskAccountNumber = (value) => {
+    const text = String(value || '');
+    if (text.length <= 4) return text;
+    return `${'*'.repeat(Math.max(0, text.length - 4))}${text.slice(-4)}`;
+  };
+
+  const handlePayout = async (salary) => {
+    const bankAccount = getStaffBankAccount(salary);
+
+    if (!bankAccount) {
+      toast.error('Staff bank account not found. Please add or set one first.');
+      return;
+    }
+
+    if ((salary?.status || '').toLowerCase() !== 'paid') {
+      toast.error('Salary must be marked as paid first.');
+      return;
+    }
+
+    const confirmText = `Send ₹${Number(salary?.net_salary || 0).toFixed(2)} to ${salary?.staff?.name || 'staff'}?`;
+    if (!window.confirm(confirmText)) return;
+
+    setPayoutingId(salary.id);
+    try {
+      const response = await axiosInstance.post(`/admin/salary/${salary.id}/payout`, {
+        bank_account_id: bankAccount.id,
+        mode: 'bank_transfer',
+        purpose: 'salary',
+      });
+
+      toast.success(response.data?.message || 'RazorpayX payout initiated.');
+      await fetchSalaries();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Payout request failed.');
+    } finally {
+      setPayoutingId(null);
+    }
+  };
 
   return (
-    <div className="container-fluid p-4" style={{  minHeight: '100vh' }}>
+    <div className="container-fluid p-4" style={{ minHeight: '100vh' }}>
       <style>{`
         .sahayya-btn-primary {
           background-color: #D98C7A !important;
@@ -30,151 +113,232 @@ const SalaryManagement = () => {
           color: #555;
           font-weight: 600;
           border-bottom: 2px solid #eee;
+          white-space: nowrap;
         }
       `}</style>
 
-      {/* Page Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">Salary Management</h2>
-       
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+          <h2 className="fw-bold mb-1">Salary Management</h2>
+          <div className="text-muted small">RazorpayX payout flow for staff bank transfers</div>
+        </div>
+        <button className="btn sahayya-btn-primary" onClick={fetchSalaries} disabled={loading}>
+          {loading ? 'Refreshing...' : 'Refresh'}
+        </button>
       </div>
 
-      {/* Main Container */}
-      <div className="card sahayya-card p-4">
-        
-        {/* Search + Filter Row */}
-        <div className="row g-3 mb-4">
+      <div className="card sahayya-card p-4 mb-4">
+        <div className="row g-3">
           <div className="col-md-4">
             <div className="input-group">
-              <span className="input-group-text bg-white border-end-0"><i className="bi bi-search"></i></span>
-              <input type="text" className="form-control border-start-0" placeholder="Search staff..." />
+              <span className="input-group-text bg-white border-end-0">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control border-start-0"
+                placeholder="Search staff..."
+                value={filters.name}
+                onChange={(e) => setFilters((prev) => ({ ...prev, name: e.target.value }))}
+              />
             </div>
           </div>
-          <div className="col-md-2">
-            <select className="form-select">
-              <option value="">All Months</option>
-              <option value="jan">January</option>
-              <option value="dec">December</option>
-            </select>
+          <div className="col-md-3">
+            <input
+              type="month"
+              className="form-control"
+              value={filters.month}
+              onChange={(e) => setFilters((prev) => ({ ...prev, month: e.target.value }))}
+            />
           </div>
-          <div className="col-md-2">
-            <select className="form-select">
-              <option value="">Status</option>
+          <div className="col-md-3">
+            <select
+              className="form-select"
+              value={filters.status}
+              onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+            >
+              <option value="">All Status</option>
               <option value="paid">Paid</option>
               <option value="pending">Pending</option>
+              <option value="unpaid">Unpaid</option>
             </select>
           </div>
+          <div className="col-md-2">
+            <button className="btn btn-outline-secondary w-100" onClick={fetchSalaries}>
+              Apply
+            </button>
+          </div>
         </div>
+      </div>
 
-        {/* Table */}
+      <div className="card sahayya-card p-4">
         <div className="table-responsive">
           <table className="table sahayya-table align-middle">
             <thead>
               <tr>
                 <th>Sr.</th>
                 <th>House Owner</th>
-                <th>Staff Name</th>
+                <th>Staff</th>
                 <th>Month</th>
                 <th>Amount</th>
+                <th>Payment Mode</th>
                 <th>Payment Date</th>
-                <th>Status</th>
-                
+                <th>Salary Status</th>
+                <th>RazorpayX</th>
+                <th className="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {salaries.map((s, index) => (
-                <tr key={s.id}>
-                    <td>{index+1}</td>
-                    <td>{s.houseOwner}</td>
-                  <td>
-                    <div className="fw-bold">{s.staff}</div>
-                    <small className="text-muted">{s.role}</small>
+              {loading ? (
+                <tr>
+                  <td colSpan="10" className="text-center py-5 text-muted">
+                    Loading salaries...
                   </td>
-                  <td>{s.month}</td>
-                  <td className="fw-bold">{s.amount}</td>
-                  <td>{s.date}</td>
-                  <td>
-                   
-                     <span className={`badge rounded-pillbg-success-subtle text-success`}>
-                      {s.status}
-                    </span>
-                  </td>
-                  {/* <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#salaryDetailModal">
-                      <i className="bi bi-file-earmark-text"></i>
-                    </button>
-                    
-                  </td> */}
                 </tr>
-              ))}
+              ) : salaries.length ? (
+                salaries.map((salary, index) => {
+                  const latestPayout = getLatestPayout(salary);
+                  const bankAccount = getStaffBankAccount(salary);
+                  const payoutStatus = latestPayout?.status || 'not initiated';
+                  const canPayout = (salary?.status || '').toLowerCase() === 'paid' && !ACTIVE_PAYOUT_STATUSES.includes(String(payoutStatus).toLowerCase());
+
+                  return (
+                    <tr key={salary.id}>
+                      <td>{((pageData?.current_page || 1) - 1) * (pageData?.per_page || 10) + index + 1}</td>
+                      <td>{salary?.houseowner?.name || salary?.houseowner?.first_name || 'N/A'}</td>
+                      <td>
+                        <div className="fw-bold">{salary?.staff?.name || salary?.staff?.first_name || 'N/A'}</div>
+                        <small className="text-muted">ID: {salary?.staff_id}</small>
+                      </td>
+                      <td>{salary?.payment_date || '-'}</td>
+                      <td className="fw-bold">₹{Number(salary?.net_salary || 0).toFixed(2)}</td>
+                      <td>{salary?.payment_mode || '-'}</td>
+                      <td>{salary?.payment_date || '-'}</td>
+                      <td>
+                        <span className={`badge rounded-pill ${String(salary?.status).toLowerCase() === 'paid' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
+                          {salary?.status || 'pending'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="small">
+                          <div className="fw-semibold">{payoutStatus}</div>
+                          <div className="text-muted">
+                            {bankAccount ? `${bankAccount.bank_name} • ${maskAccountNumber(bankAccount.account_number)}` : 'No bank account'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="text-end">
+                        <button
+                          className="btn btn-sm btn-outline-secondary me-2"
+                          onClick={() => setSelectedSalary(salary)}
+                        >
+                          Details
+                        </button>
+                        <button
+                          className="btn btn-sm sahayya-btn-primary"
+                          disabled={!canPayout || payoutingId === salary.id}
+                          onClick={() => handlePayout(salary)}
+                        >
+                          {payoutingId === salary.id ? 'Sending...' : 'Send RazorpayX'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="10" className="text-center py-5 text-muted">
+                    No salary records found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="d-flex justify-content-between align-items-center mt-4">
-          <span className="text-muted small">Showing 1 to 3 of 3 records</span>
+        <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-2">
+          <span className="text-muted small">
+            Showing {pageData?.from || 0} to {pageData?.to || 0} of {pageData?.total || 0} records
+          </span>
           <nav>
             <ul className="pagination pagination-sm mb-0">
-              <li className="page-item disabled"><span className="page-link">Previous</span></li>
-              <li className="page-item active"><span className="page-link" style={{backgroundColor: '#D98C7A', borderColor: '#D98C7A'}}>1</span></li>
-              <li className="page-item"><span className="page-link text-dark">Next</span></li>
+              <li className={`page-item ${pageData?.prev_page_url ? '' : 'disabled'}`}>
+                <button className="page-link" onClick={fetchSalaries} disabled={!pageData?.prev_page_url}>
+                  Reload
+                </button>
+              </li>
             </ul>
           </nav>
         </div>
       </div>
 
-      {/* Salary Details Modal */}
-      <div className="modal fade" id="salaryDetailModal" tabIndex="-1">
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content border-0" style={{ borderRadius: '15px' }}>
-            <div className="modal-header border-0">
-              <h5 className="modal-title fw-bold">Salary Payslip Preview</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div className="modal-body px-4">
-              <div className="text-center mb-4">
-                <h4 className="fw-bold mb-0" style={{ color: '#D98C7A' }}>Sahayya</h4>
-                <small className="text-muted text-uppercase letter-spacing-1">Monthly Statement</small>
+      {selectedSalary && (
+        <div className="modal fade show" style={{ display: 'block', background: 'rgba(0,0,0,0.45)' }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content border-0" style={{ borderRadius: '15px' }}>
+              <div className="modal-header border-0">
+                <h5 className="modal-title fw-bold">Salary Details</h5>
+                <button type="button" className="btn-close" onClick={() => setSelectedSalary(null)}></button>
               </div>
-              <div className="border-bottom pb-2 mb-3">
-                <div className="row small mb-1">
-                  <div className="col-6 text-muted">Staff Name:</div>
-                  <div className="col-6 text-end fw-bold">Raju Prasad</div>
+              <div className="modal-body px-4">
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <div className="border rounded p-3 h-100">
+                      <div className="small text-muted mb-1">Staff</div>
+                      <div className="fw-semibold">{selectedSalary?.staff?.name || 'N/A'}</div>
+                      <div className="small text-muted">Phone: {selectedSalary?.staff?.phone_number || 'N/A'}</div>
+                      <div className="small text-muted">Bank: {getStaffBankAccount(selectedSalary)?.bank_name || 'N/A'}</div>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="border rounded p-3 h-100">
+                      <div className="small text-muted mb-1">Salary</div>
+                      <div className="fw-semibold">₹{Number(selectedSalary?.net_salary || 0).toFixed(2)}</div>
+                      <div className="small text-muted">Status: {selectedSalary?.status || 'pending'}</div>
+                      <div className="small text-muted">Payment date: {selectedSalary?.payment_date || '-'}</div>
+                    </div>
+                  </div>
                 </div>
-                <div className="row small">
-                  <div className="col-6 text-muted">Period:</div>
-                  <div className="col-6 text-end fw-bold">Jan 01 - Jan 31, 2026</div>
+
+                <div className="mt-3">
+                  <div className="fw-semibold mb-2">Recent payout attempts</div>
+                  {(selectedSalary?.payouts || []).length ? (
+                    <div className="table-responsive">
+                      <table className="table table-sm align-middle">
+                        <thead>
+                          <tr>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Reference</th>
+                            <th>UTR</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedSalary.payouts.map((payout) => (
+                            <tr key={payout.id}>
+                              <td>{payout.status}</td>
+                              <td>₹{Number(payout.amount || 0).toFixed(2)}</td>
+                              <td>{payout.reference_id || '-'}</td>
+                              <td>{payout.utr || '-'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-muted small">No payout attempts yet.</div>
+                  )}
                 </div>
               </div>
-              <div className="mb-3">
-                <div className="d-flex justify-content-between mb-2">
-                  <span>Basic Salary</span>
-                  <span>₹16,000</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span>Allowances</span>
-                  <span>₹2,500</span>
-                </div>
-                <div className="d-flex justify-content-between text-danger mb-2">
-                  <span>Deductions (2 Leaves)</span>
-                  <span>- ₹500</span>
-                </div>
+              <div className="modal-footer border-0">
+                <button type="button" className="btn btn-light" onClick={() => setSelectedSalary(null)}>
+                  Close
+                </button>
               </div>
-              <div className="p-3 rounded" style={{ backgroundColor: '#FFF5F2' }}>
-                <div className="d-flex justify-content-between fw-bold">
-                  <span>Net Payable</span>
-                  <span style={{ color: '#D98C7A' }}>₹18,000</span>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer border-0">
-              <button type="button" className="btn btn-light" data-bs-dismiss="modal">Close</button>
-              <button type="button" className="btn sahayya-btn-primary"><i className="bi bi-printer me-2"></i>Print Payslip</button>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

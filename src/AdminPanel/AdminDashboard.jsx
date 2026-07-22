@@ -128,7 +128,6 @@ const AdminDashboard = () => {
       const res = await axiosInstance.get("/admin/dashbord-data");
       if (res?.data?.status) setDashboardData(res.data.data);
     } catch (err) {
-      console.log(err);
       toast.error("Dashboard load failed");
     } finally {
       setLoading(false);
@@ -226,12 +225,6 @@ const AdminDashboard = () => {
 
   return (
     <>
-      {/* Google Font */}
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      />
-
       <div style={s.page}>
         {/* ── Header ── */}
         <div style={s.header}>

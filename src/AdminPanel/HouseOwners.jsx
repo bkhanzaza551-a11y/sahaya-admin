@@ -11,7 +11,10 @@ const defaultOwnerForm = {
   dob: "",
   gender: "",
   status: "active",
-  exact_location: "",
+  area_locality: "",
+  google_location: "",
+  lat: "",
+  long: "",
   current_city: "",
   current_state: "",
   current_pincode: "",
@@ -36,6 +39,10 @@ const getAddress = (owner) => {
     city: primaryAddress?.city || owner?.current_city || "-",
     state: primaryAddress?.state || owner?.current_state || "-",
     pincode: primaryAddress?.pincode || owner?.current_pincode || "-",
+    area_locality: primaryAddress?.area_locality || owner?.area_locality || "-",
+    google_location: primaryAddress?.google_location || owner?.google_location || "-",
+    lat: primaryAddress?.lat || primaryAddress?.latitude || owner?.lat || "-",
+    long: primaryAddress?.long || primaryAddress?.longitude || owner?.long || "-",
   };
 };
 
@@ -60,7 +67,10 @@ const buildOwnerForm = (owner) => {
     dob: owner?.dob || owner?.date_of_birth || "",
     gender: owner?.gender || "",
     status: owner?.status || "active",
-    exact_location: owner?.exact_location || owner?.location || address?.street || "",
+    area_locality: owner?.area_locality || address?.area_locality || "",
+    google_location: owner?.google_location || address?.google_location || "",
+    lat: owner?.lat || address?.lat || "",
+    long: owner?.long || address?.long || "",
     current_city: owner?.current_city || address?.city || "",
     current_state: owner?.current_state || address?.state || "",
     current_pincode: owner?.current_pincode || address?.pincode || "",
@@ -401,7 +411,10 @@ const HouseOwners = () => {
                         {renderOwnerField("Date of Birth", "dob", selectedOwner.dob || selectedOwner.date_of_birth)}
                         {renderOwnerField("Gender", "gender", selectedOwner.gender)}
                         {renderOwnerField("Status", "status", selectedOwner.status)}
-                        {renderOwnerField("Exact Location", "exact_location", selectedOwner.exact_location || selectedOwner.location || getAddress(selectedOwner).street)}
+                        {renderOwnerField("Area / Locality", "area_locality", selectedOwner.area_locality || getAddress(selectedOwner).area_locality)}
+                        {renderOwnerField("Google Location URL", "google_location", selectedOwner.google_location || getAddress(selectedOwner).google_location)}
+                        {renderOwnerField("Latitude", "lat", selectedOwner.lat || getAddress(selectedOwner).lat)}
+                        {renderOwnerField("Longitude", "long", selectedOwner.long || getAddress(selectedOwner).long)}
                         {renderOwnerField("City", "current_city", selectedOwner.current_city || getAddress(selectedOwner).city)}
                         {renderOwnerField("State", "current_state", selectedOwner.current_state || getAddress(selectedOwner).state)}
                         {renderOwnerField("Pincode", "current_pincode", selectedOwner.current_pincode || getAddress(selectedOwner).pincode)}

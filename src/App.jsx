@@ -23,8 +23,10 @@ import Addrole from "./AdminPanel/Addrole";
 import AllStaff from "./AdminPanel/AllStaff";
 import Reports from "./AdminPanel/Reports";
 import Settings from "./AdminPanel/Settings";
+import JobApplyLimits from "./AdminPanel/JobApplyLimits";
 import AdminUsers from "./AdminPanel/AdminUsers";
 import BlacklistManagement from "./AdminPanel/BlacklistManagement";
+import LegalConsentLogs from "./AdminPanel/LegalConsentLogs";
 import Unauthorized from "./AdminPanel/Unauthorized";
 import { hasModulePermission } from "./utiles/adminPermissions";
 
@@ -32,6 +34,12 @@ import { hasModulePermission } from "./utiles/adminPermissions";
 // Vendor
 
 const ProtectedAdminRoute = ({ moduleKey, children }) => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.href = "/";
+    return null;
+  }
+
   if (!hasModulePermission(moduleKey)) {
     return <Unauthorized />;
   }
@@ -74,6 +82,7 @@ const AppWrapper = () => {
           <Route path="blacklist" element={<ProtectedAdminRoute moduleKey="blacklist"><BlacklistManagement /></ProtectedAdminRoute>} />
           <Route path="admin-users" element={<ProtectedAdminRoute moduleKey="sub_admins"><AdminUsers /></ProtectedAdminRoute>} />
           <Route path="settings" element={<ProtectedAdminRoute moduleKey="settings"><Settings /></ProtectedAdminRoute>} />
+          <Route path="legal-consents" element={<ProtectedAdminRoute moduleKey="settings"><LegalConsentLogs /></ProtectedAdminRoute>} />
 
 
         </Route>

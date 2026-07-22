@@ -2,6 +2,10 @@ import React from "react";
 import "./Sidebar.css";
 
 const AdminHeader = ({ onToggleSidebar, sidebarOpen }) => {
+  const loginDetails = JSON.parse(localStorage.getItem("login_details")) || {};
+  const displayName = loginDetails.name || loginDetails.email || "Admin";
+  const displayRole = loginDetails.role || "Admin";
+
   return (
     <header className="admin-header">
       <div className="admin-header-inner">
@@ -28,8 +32,8 @@ const AdminHeader = ({ onToggleSidebar, sidebarOpen }) => {
         <div className="header-right">
           <div className="user-avatar">S</div>
           <div className="user-info d-none d-sm-block">
-            <div className="user-name">Sahayya</div>
-            <div className="user-role">Admin</div>
+            <div className="user-name">{displayName}</div>
+            <div className="user-role">{displayRole}</div>
           </div>
         </div>
       </div>

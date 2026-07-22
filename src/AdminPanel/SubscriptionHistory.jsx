@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axiosInstance from "../utiles/axiosInstance";
+import { toast } from "react-toastify";
 
 const SubscriptionHistory = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -30,11 +31,11 @@ const SubscriptionHistory = () => {
     try {
       const res = await axiosInstance.post(`/admin/subscriptionuser/${id}/refund`);
       if (res.data.status) {
-        alert("Refunded successfully");
+        toast.success("Refunded successfully");
         fetchSubscriptions();
       }
     } catch (error) {
-      alert("Failed to process refund");
+      toast.error("Failed to process refund");
     }
   };
 
@@ -149,14 +150,14 @@ const SubscriptionHistory = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="text-center py-5">
+                <td colSpan="8" className="text-center py-5">
                   <div className="spinner-border spinner-border-sm text-success me-2" role="status"></div>
                   Loading history...
                 </td>
               </tr>
             ) : subscriptions.length === 0 ? (
               <tr>
-                <td colSpan="7" className="text-center py-5">
+                <td colSpan="8" className="text-center py-5">
                   <p className="text-muted m-0">No subscription history found</p>
                 </td>
               </tr>
