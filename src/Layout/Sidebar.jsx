@@ -25,6 +25,8 @@ const Sidebar = ({ onLinkClick }) => {
       hasModulePermission("sub_admins") && ["/admin/admin-users", "fas fa-user-shield", "Admin Users"],
       hasModulePermission("settings") && ["/admin/settings", "fas fa-cog", "Settings"],
       hasModulePermission("settings") && ["/admin/legal-consents", "fas fa-file-signature", "Legal Consents"],
+      hasModulePermission("settings") && ["/admin/zoho-crm", "fas fa-address-book", "Zoho CRM"],
+      hasModulePermission("settings") && ["/admin/zoho-desk", "fas fa-headset", "Zoho Desk"],
 
       ["/", "fas fa-sign-out-alt", "Logout"],
     ].filter(Boolean),
