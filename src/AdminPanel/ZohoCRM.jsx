@@ -28,7 +28,6 @@ const DEAL_STAGES = [
 
 const ZohoCRM = () => {
   const [activeTab, setActiveTab] = useState("Leads");
-  const [authStatus, setAuthStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -48,15 +47,6 @@ const ZohoCRM = () => {
   const [pipelineMeta, setPipelineMeta] = useState({ total_deals: 0, total_amount: 0 });
   const [pipelineLoading, setPipelineLoading] = useState(false);
   const [draggedDeal, setDraggedDeal] = useState(null);
-
-  const fetchAuthStatus = useCallback(async () => {
-    try {
-      const { data } = await axiosInstance.get("/zoho/status");
-      setAuthStatus(data.data);
-    } catch {
-      setAuthStatus({ crm: { authorized: false }, desk: { authorized: false } });
-    }
-  }, []);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -160,39 +150,17 @@ const ZohoCRM = () => {
     setDraggedDeal(null);
   };
 
-  const isAuthorized = authStatus?.crm?.authorized;
-
   useEffect(() => {
-    fetchAuthStatus();
-  }, [fetchAuthStatus]);
-
-  useEffect(() => {
-    if (!isAuthorized) return;
     fetchSummary();
-  }, [isAuthorized, fetchSummary]);
+  }, [fetchSummary]);
 
   useEffect(() => {
-    if (!isAuthorized) return;
     if (activeTab === "Leads") fetchLeads();
     else if (activeTab === "Contacts") fetchContacts();
     else if (activeTab === "Deals") fetchDeals();
     else if (activeTab === "Pipeline") fetchPipeline();
     else if (activeTab === "Reports") fetchReports();
-  }, [isAuthorized, activeTab, fetchLeads, fetchContacts, fetchDeals, fetchPipeline, fetchReports]);
-
-  const handleConnect = async (service) => {
-    try {
-      const { data } = await axiosInstance.get(`/zoho/auth-url?service=${service}`);
-      if (data.success && data.data.url) {
-        window.location.href = data.data.url;
-      } else {
-        toast.error(data.message || "Zoho CRM credentials not configured. Please add ZOHO_CRM_CLIENT_ID and ZOHO_CRM_CLIENT_SECRET to the server.");
-      }
-    } catch (e) {
-      const msg = e?.response?.data?.message || "Failed to generate auth URL. Zoho CRM credentials may not be configured on the server.";
-      toast.error(msg);
-    }
-  };
+  }, [activeTab, fetchLeads, fetchContacts, fetchDeals, fetchPipeline, fetchReports]);
 
   const handleSync = async (type) => {
     setSyncing(true);
@@ -655,8 +623,7 @@ const ZohoCRM = () => {
         .stat-number { font-size: 28px; font-weight: 700; color: #D98C7A; }
         .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
         .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; color: white; }
-        .connect-btn { background: #1a73e8; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 500; }
-        .connect-btn:hover { background: #1557b0; }
+
         .action-btn { padding: 4px 8px; border-radius: 6px; border: none; font-size: 12px; cursor: pointer; }
         .action-btn.edit { background: #e3f2fd; color: #1976d2; }
         .action-btn.edit:hover { background: #bbdefb; }
@@ -678,43 +645,21 @@ const ZohoCRM = () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h4 className="fw-bold">Zoho CRM</h4>
-          <p className="text-muted mb-0" style={{ fontSize: 13 }}>Manage leads, contacts and deals from Sahayya</p>
+          <p className="text-muted mb-0" style={{ fontSize: 13 }}>Leads, contacts and deals from Sahayya</p>
         </div>
         <div className="d-flex gap-2">
-          {!isAuthorized ? (
-            <button className="connect-btn" onClick={() => handleConnect("crm")}>
-              <i className="fas fa-link me-2"></i>Connect Zoho CRM
-            </button>
-          ) : (
-            <>
-              <button className="btn btn-outline-success btn-sm" onClick={() => handleSync("staff")} disabled={syncing}>
-                {syncing ? <i className="fas fa-spinner fa-spin me-1"></i> : <i className="fas fa-sync me-1"></i>}
-                Sync Staff
-              </button>
-              <button className="btn btn-outline-primary btn-sm" onClick={() => handleSync("owners")} disabled={syncing}>
-                {syncing ? <i className="fas fa-spinner fa-spin me-1"></i> : <i className="fas fa-sync me-1"></i>}
-                Sync Owners
-              </button>
-            </>
-          )}
+          <button className="btn btn-outline-success btn-sm" onClick={() => handleSync("staff")} disabled={syncing}>
+            {syncing ? <i className="fas fa-spinner fa-spin me-1"></i> : <i className="fas fa-sync me-1"></i>}
+            Sync Staff
+          </button>
+          <button className="btn btn-outline-primary btn-sm" onClick={() => handleSync("owners")} disabled={syncing}>
+            {syncing ? <i className="fas fa-spinner fa-spin me-1"></i> : <i className="fas fa-sync me-1"></i>}
+            Sync Owners
+          </button>
         </div>
       </div>
 
-      {/* NOT AUTHORIZED */}
-      {!isAuthorized && authStatus && (
-        <div className="card sahayya-card p-5 text-center">
-          <i className="fas fa-plug fa-3x text-muted mb-3"></i>
-          <h5>Connect Your Zoho CRM</h5>
-          <p className="text-muted mb-3" style={{ maxWidth: 500, margin: "0 auto" }}>
-            Authorize Sahayya to access your Zoho CRM data. You'll be redirected to Zoho for authentication.
-          </p>
-          <button className="connect-btn" onClick={() => handleConnect("crm")}>
-            <i className="fas fa-link me-2"></i>Authorize Zoho CRM
-          </button>
-        </div>
-      )}
-
-      {isAuthorized && (
+      {/* STATS */}
         <>
           {/* STATS */}
           <div className="row g-3 mb-4">
@@ -943,8 +888,6 @@ const ZohoCRM = () => {
               )}
             </div>
           )}
-        </>
-      )}
     </div>
   );
 };
