@@ -18,7 +18,6 @@ import LeaveManagement from "./AdminPanel/LeaveManagement";
 import SalaryManagement from "./AdminPanel/SalaryManagement";
 import Membership from "./AdminPanel/Membership";
 import Notifications from "./AdminPanel/Notifications";
-import Support from "./AdminPanel/Support";
 import Addrole from "./AdminPanel/Addrole";
 import AllStaff from "./AdminPanel/AllStaff";
 import Reports from "./AdminPanel/Reports";
@@ -29,7 +28,6 @@ import BlacklistManagement from "./AdminPanel/BlacklistManagement";
 import LegalConsentLogs from "./AdminPanel/LegalConsentLogs";
 import Unauthorized from "./AdminPanel/Unauthorized";
 import ZohoCRM from "./AdminPanel/ZohoCRM";
-import ZohoDesk from "./AdminPanel/ZohoDesk";
 import ZohoMail from "./AdminPanel/ZohoMail";
 import { hasModulePermission } from "./utiles/adminPermissions";
 
@@ -79,7 +77,6 @@ const AppWrapper = () => {
           <Route path="membership" element={<ProtectedAdminRoute moduleKey="membership"><Membership /></ProtectedAdminRoute>} />
           <Route path="salary" element={<ProtectedAdminRoute moduleKey="staff"><SalaryManagement /></ProtectedAdminRoute>} />
           <Route path="notifications" element={<ProtectedAdminRoute moduleKey="dashboard"><Notifications /></ProtectedAdminRoute>} />
-          <Route path="support" element={<ProtectedAdminRoute moduleKey="dashboard"><Support /></ProtectedAdminRoute>} />
           <Route path="addrole" element={<ProtectedAdminRoute moduleKey="roles"><Addrole /></ProtectedAdminRoute>} />
           <Route path="reports" element={<ProtectedAdminRoute moduleKey="reports"><Reports /></ProtectedAdminRoute>} />
           <Route path="blacklist" element={<ProtectedAdminRoute moduleKey="blacklist"><BlacklistManagement /></ProtectedAdminRoute>} />
@@ -87,7 +84,6 @@ const AppWrapper = () => {
           <Route path="settings" element={<ProtectedAdminRoute moduleKey="settings"><Settings /></ProtectedAdminRoute>} />
           <Route path="legal-consents" element={<ProtectedAdminRoute moduleKey="settings"><LegalConsentLogs /></ProtectedAdminRoute>} />
           <Route path="zoho-crm" element={<ProtectedAdminRoute moduleKey="settings"><ZohoCRM /></ProtectedAdminRoute>} />
-          <Route path="zoho-desk" element={<ProtectedAdminRoute moduleKey="settings"><ZohoDesk /></ProtectedAdminRoute>} />
           <Route path="zoho-mail" element={<ProtectedAdminRoute moduleKey="settings"><ZohoMail /></ProtectedAdminRoute>} />
 
 
