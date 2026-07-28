@@ -144,7 +144,11 @@ const ZohoDesk = () => {
       else if (activeTab === "Knowledge Base") { fetchKBCategories(); fetchKBArticles(); }
       else if (activeTab === "Canned Responses") fetchCannedResponses();
     }
-  }, [authStatus, fetchTickets, activeTab, fetchKBCategories, fetchKBArticles, fetchCannedResponses]);
+  }, [authStatus, activeTab, fetchKBCategories, fetchKBArticles, fetchCannedResponses]);
+
+  useEffect(() => {
+    if (authStatus?.desk?.authorized && activeTab === "Tickets") fetchTickets();
+  }, [filterStatus]);
 
   const handleConnect = async () => {
     try {
@@ -256,6 +260,8 @@ const ZohoDesk = () => {
         setShowReassign(false);
         setReassignId("");
         handleViewTicket(selectedTicket);
+      } else {
+        toast.error("Failed to reassign ticket");
       }
     } catch (e) {
       toast.error(e?.response?.data?.message || "Failed to reassign ticket");
@@ -367,7 +373,7 @@ const ZohoDesk = () => {
 
               {/* FILTERS */}
               <div className="d-flex gap-2 mb-3">
-                {["", "Open", "In Progress", "Closed"].map((s) => (
+                {["", "Open", "In Progress", "Closed", "On Hold", "Escalated"].map((s) => (
                   <button key={s} className={`filter-btn ${filterStatus === s ? "active" : ""}`} onClick={() => setFilterStatus(s)}>
                     {s || "All"}
                   </button>
@@ -518,7 +524,9 @@ const ZohoDesk = () => {
                             <div className="col-md-4">
                               <label className="form-label fw-semibold" style={{ fontSize: 12 }}>Assigned To</label>
                               <div className="form-control form-control-sm" style={{ fontSize: 13 }}>
-                                {ticketDetail.assignee?.firstName} {ticketDetail.assignee?.lastName || "Unassigned"}
+                                {ticketDetail.assignee?.firstName && ticketDetail.assignee?.lastName
+                                  ? `${ticketDetail.assignee.firstName} ${ticketDetail.assignee.lastName}`
+                                  : ticketDetail.assignee?.firstName || ticketDetail.assignee?.lastName || "Unassigned"}
                               </div>
                             </div>
                           </div>

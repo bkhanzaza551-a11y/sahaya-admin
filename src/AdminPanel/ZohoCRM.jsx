@@ -601,9 +601,9 @@ const ZohoCRM = () => {
             <div className="col-md-3">
               <div className="stat-card">
                 <div className="stat-number" style={{ color: "#28a745" }}>
-                  {leads.filter(l => l.Lead_Status === "Qualified").length}
+                  {summary.leads + summary.contacts + summary.deals}
                 </div>
-                <div className="stat-label">Qualified Leads</div>
+                <div className="stat-label">Total Records</div>
               </div>
             </div>
           </div>
