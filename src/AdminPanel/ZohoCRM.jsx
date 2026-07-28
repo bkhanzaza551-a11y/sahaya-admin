@@ -160,6 +160,8 @@ const ZohoCRM = () => {
     setDraggedDeal(null);
   };
 
+  const isAuthorized = authStatus?.crm?.authorized;
+
   useEffect(() => {
     fetchAuthStatus();
   }, [fetchAuthStatus]);
@@ -309,8 +311,6 @@ const ZohoCRM = () => {
     setFormData({ ...record });
     setShowForm(false);
   };
-
-  const isAuthorized = authStatus?.crm?.authorized;
 
   const renderLeadForm = () => (
     <div className="card sahayya-card p-4 mb-4">
