@@ -138,7 +138,9 @@ const SubscriptionHistory = () => {
             <tr>
               <th>User</th>
               <th>Plan</th>
-              <th>Amount</th>
+              <th>Base</th>
+              <th>GST</th>
+              <th>Total</th>
               <th>Type</th>
               <th>Start Date</th>
               <th>End Date</th>
@@ -150,14 +152,14 @@ const SubscriptionHistory = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" className="text-center py-5">
+                <td colSpan="10" className="text-center py-5">
                   <div className="spinner-border spinner-border-sm text-success me-2" role="status"></div>
                   Loading history...
                 </td>
               </tr>
             ) : subscriptions.length === 0 ? (
               <tr>
-                <td colSpan="8" className="text-center py-5">
+                <td colSpan="10" className="text-center py-5">
                   <p className="text-muted m-0">No subscription history found</p>
                 </td>
               </tr>
@@ -174,7 +176,9 @@ const SubscriptionHistory = () => {
                     </span>
                   </td>
 
-                  <td className="fw-bold text-success">&#8377;{getEffectiveAmount(sub).toFixed(2)}</td>
+                  <td className="text-muted">&#8377;{Number(sub.base_amount || 0).toFixed(2)}</td>
+                  <td className="text-muted">&#8377;{Number(sub.gst_amount || 0).toFixed(2)}</td>
+                  <td className="fw-bold text-success">&#8377;{Number(sub.total_amount || sub.amount || 0).toFixed(2)}</td>
 
                   <td className="text-capitalize">{sub.subscription?.type}</td>
 
