@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "../utiles/axiosInstance";
 import { toast } from "react-toastify";
 
-const TABS = ["Leads", "Contacts", "Deals", "Reports"];
+const TABS = ["Leads", "Contacts", "Deals", "Pipeline", "Reports"];
 
 const STATUS_COLORS = {
   Contacted: "#17a2b8",
@@ -44,6 +44,10 @@ const ZohoCRM = () => {
   const [reports, setReports] = useState(null);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pipeline, setPipeline] = useState([]);
+  const [pipelineMeta, setPipelineMeta] = useState({ total_deals: 0, total_amount: 0 });
+  const [pipelineLoading, setPipelineLoading] = useState(false);
+  const [draggedDeal, setDraggedDeal] = useState(null);
 
   const fetchAuthStatus = useCallback(async () => {
     try {
@@ -109,6 +113,53 @@ const ZohoCRM = () => {
     }
   }, []);
 
+  const fetchPipeline = useCallback(async () => {
+    setPipelineLoading(true);
+    try {
+      const { data } = await axiosInstance.get("/zoho/crm/deals/pipeline");
+      if (data.success) {
+        setPipeline(data.data);
+        setPipelineMeta(data.meta);
+      }
+    } catch {
+      toast.error("Failed to fetch pipeline");
+    } finally {
+      setPipelineLoading(false);
+    }
+  }, []);
+
+  const handleMoveStage = async (dealId, newStage) => {
+    try {
+      const { data } = await axiosInstance.put(`/zoho/crm/deals/${dealId}/stage`, { stage: newStage });
+      if (data.success) {
+        toast.success(`Deal moved to ${newStage}`);
+        fetchPipeline();
+      } else {
+        toast.error("Failed to move deal");
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.message || "Failed to move deal");
+    }
+  };
+
+  const handleDragStart = (e, deal, fromStage) => {
+    setDraggedDeal({ deal, fromStage });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, toStage) => {
+    e.preventDefault();
+    if (draggedDeal && draggedDeal.fromStage !== toStage) {
+      handleMoveStage(draggedDeal.deal.id, toStage);
+    }
+    setDraggedDeal(null);
+  };
+
   useEffect(() => {
     fetchAuthStatus();
     fetchSummary();
@@ -118,8 +169,9 @@ const ZohoCRM = () => {
     if (activeTab === "Leads") fetchLeads();
     else if (activeTab === "Contacts") fetchContacts();
     else if (activeTab === "Deals") fetchDeals();
+    else if (activeTab === "Pipeline") fetchPipeline();
     else if (activeTab === "Reports") fetchReports();
-  }, [activeTab, fetchLeads, fetchContacts, fetchDeals, fetchReports]);
+  }, [activeTab, fetchLeads, fetchContacts, fetchDeals, fetchPipeline, fetchReports]);
 
   const handleConnect = async (service) => {
     try {
@@ -240,6 +292,7 @@ const ZohoCRM = () => {
     if (activeTab === "Leads") fetchLeads();
     else if (activeTab === "Contacts") fetchContacts();
     else if (activeTab === "Deals") fetchDeals();
+    else if (activeTab === "Pipeline") fetchPipeline();
     else if (activeTab === "Reports") fetchReports();
   };
 
@@ -450,6 +503,78 @@ const ZohoCRM = () => {
     </div>
   );
 
+  const renderPipeline = () => (
+    <div className="card sahayya-card p-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h6 className="fw-bold mb-0"><i className="fas fa-columns me-2"></i>Deal Pipeline</h6>
+        <div style={{ fontSize: 13 }}>
+          <span className="text-muted">Total: </span>
+          <span className="fw-semibold" style={{ color: "#D98C7A" }}>{pipelineMeta.total_deals} deals</span>
+          <span className="text-muted mx-2">|</span>
+          <span className="fw-semibold" style={{ color: "#28a745" }}>₹{Number(pipelineMeta.total_amount).toLocaleString()}</span>
+        </div>
+      </div>
+      {pipelineLoading ? (
+        <div className="text-center py-5">
+          <i className="fas fa-spinner fa-spin fa-2x" style={{ color: "#D98C7A" }}></i>
+          <p className="mt-2 text-muted">Loading pipeline...</p>
+        </div>
+      ) : pipeline.length === 0 ? (
+        <div className="text-center py-5 text-muted">
+          <i className="fas fa-columns fa-2x mb-2"></i>
+          <p>No deals in pipeline</p>
+        </div>
+      ) : (
+        <div className="d-flex gap-3 overflow-auto pb-3" style={{ minHeight: 500 }}>
+          {pipeline.map((col) => (
+            <div
+              key={col.stage}
+              className="flex-shrink-0"
+              style={{ width: 300, background: "#f8f9fa", borderRadius: 12, padding: 12 }}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, col.stage)}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+                <span className="fw-bold" style={{ fontSize: 13 }}>{col.stage}</span>
+                <span className="badge" style={{ background: "#D98C7A", color: "white", borderRadius: 10, fontSize: 11 }}>
+                  {col.count} | ₹{Number(col.total_amount).toLocaleString()}
+                </span>
+              </div>
+              <div className="d-flex flex-column gap-2">
+                {col.deals.map((deal) => (
+                  <div
+                    key={deal.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, deal, col.stage)}
+                    className="pipeline-card"
+                    style={{
+                      background: "white", borderRadius: 8, padding: "10px 12px",
+                      border: "1px solid #eee", cursor: "grab", fontSize: 13,
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                    }}
+                  >
+                    <div className="fw-semibold mb-1" style={{ fontSize: 13 }}>{deal.Deal_Name}</div>
+                    {deal.Amount && (
+                      <div className="mb-1" style={{ fontSize: 12, color: "#28a745", fontWeight: 600 }}>
+                        ₹{Number(deal.Amount).toLocaleString()}
+                      </div>
+                    )}
+                    {deal.Contact_Name && (
+                      <div style={{ fontSize: 11, color: "#888" }}>{deal.Contact_Name.name}</div>
+                    )}
+                    {deal.Closing_Date && (
+                      <div style={{ fontSize: 11, color: "#aaa" }}>Close: {deal.Closing_Date}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   const renderReports = () => (
     <div className="card sahayya-card p-4">
       <h6 className="fw-bold mb-3"><i className="fas fa-chart-bar me-2"></i>CRM Reports</h6>
@@ -534,6 +659,11 @@ const ZohoCRM = () => {
         .search-bar { border-radius: 8px; border: 1px solid #ddd; padding: 8px 14px; font-size: 14px; }
         .search-bar:focus { border-color: #D98C7A; outline: none; box-shadow: 0 0 0 2px rgba(217,140,122,0.15); }
         .timeline-panel { background: #fafafa; border-radius: 12px; padding: 20px; border: 1px solid #eee; max-height: 400px; overflow-y: auto; }
+        .pipeline-col { transition: background 0.2s; }
+        .pipeline-col.drag-over { background: #e8f5e9 !important; }
+        .pipeline-card { transition: transform 0.1s, box-shadow 0.1s; }
+        .pipeline-card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
+        .pipeline-card:active { cursor: grabbing; }
       `}</style>
 
       {/* HEADER */}
@@ -617,8 +747,8 @@ const ZohoCRM = () => {
             ))}
           </div>
 
-          {/* SEARCH BAR + CREATE BUTTON (not for Reports tab) */}
-          {activeTab !== "Reports" && (
+          {/* SEARCH BAR + CREATE BUTTON (not for Reports/Pipeline tabs) */}
+          {activeTab !== "Reports" && activeTab !== "Pipeline" && (
             <div className="d-flex gap-2 mb-3">
               <div className="d-flex gap-2 flex-grow-1">
                 <input
@@ -649,11 +779,14 @@ const ZohoCRM = () => {
           {showForm && activeTab === "Deals" && renderDealForm()}
           {editRecord && renderEditForm()}
 
+          {/* PIPELINE TAB */}
+          {activeTab === "Pipeline" && renderPipeline()}
+
           {/* REPORTS TAB */}
           {activeTab === "Reports" && renderReports()}
 
           {/* DATA TABLE */}
-          {activeTab !== "Reports" && (
+          {activeTab !== "Reports" && activeTab !== "Pipeline" && (
             <div className="card sahayya-card p-4">
               {loading ? (
                 <div className="text-center py-5">

@@ -30,6 +30,7 @@ import LegalConsentLogs from "./AdminPanel/LegalConsentLogs";
 import Unauthorized from "./AdminPanel/Unauthorized";
 import ZohoCRM from "./AdminPanel/ZohoCRM";
 import ZohoDesk from "./AdminPanel/ZohoDesk";
+import ZohoMail from "./AdminPanel/ZohoMail";
 import { hasModulePermission } from "./utiles/adminPermissions";
 
 
@@ -87,6 +88,7 @@ const AppWrapper = () => {
           <Route path="legal-consents" element={<ProtectedAdminRoute moduleKey="settings"><LegalConsentLogs /></ProtectedAdminRoute>} />
           <Route path="zoho-crm" element={<ProtectedAdminRoute moduleKey="settings"><ZohoCRM /></ProtectedAdminRoute>} />
           <Route path="zoho-desk" element={<ProtectedAdminRoute moduleKey="settings"><ZohoDesk /></ProtectedAdminRoute>} />
+          <Route path="zoho-mail" element={<ProtectedAdminRoute moduleKey="settings"><ZohoMail /></ProtectedAdminRoute>} />
 
 
         </Route>
