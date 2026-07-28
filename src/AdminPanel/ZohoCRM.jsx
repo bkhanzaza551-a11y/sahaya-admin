@@ -162,25 +162,33 @@ const ZohoCRM = () => {
 
   useEffect(() => {
     fetchAuthStatus();
-    fetchSummary();
-  }, [fetchAuthStatus, fetchSummary]);
+  }, [fetchAuthStatus]);
 
   useEffect(() => {
+    if (!isAuthorized) return;
+    fetchSummary();
+  }, [isAuthorized, fetchSummary]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
     if (activeTab === "Leads") fetchLeads();
     else if (activeTab === "Contacts") fetchContacts();
     else if (activeTab === "Deals") fetchDeals();
     else if (activeTab === "Pipeline") fetchPipeline();
     else if (activeTab === "Reports") fetchReports();
-  }, [activeTab, fetchLeads, fetchContacts, fetchDeals, fetchPipeline, fetchReports]);
+  }, [isAuthorized, activeTab, fetchLeads, fetchContacts, fetchDeals, fetchPipeline, fetchReports]);
 
   const handleConnect = async (service) => {
     try {
       const { data } = await axiosInstance.get(`/zoho/auth-url?service=${service}`);
       if (data.success && data.data.url) {
         window.location.href = data.data.url;
+      } else {
+        toast.error(data.message || "Zoho CRM credentials not configured. Please add ZOHO_CRM_CLIENT_ID and ZOHO_CRM_CLIENT_SECRET to the server.");
       }
-    } catch {
-      toast.error("Failed to generate auth URL");
+    } catch (e) {
+      const msg = e?.response?.data?.message || "Failed to generate auth URL. Zoho CRM credentials may not be configured on the server.";
+      toast.error(msg);
     }
   };
 
