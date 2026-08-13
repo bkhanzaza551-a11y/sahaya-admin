@@ -42,7 +42,7 @@ const getStaffName = (staff) =>
     : staff?.name || "-";
 
 const getPrimaryAddress = (staff) => {
-  const address = staff?.addresses?.[0] || {};
+  const address = staff?.addresses?.find(a => a.address_type === 'present') || staff?.addresses?.[0] || {};
   return {
     street: address.street || address.locality || staff?.current_street || staff?.permanent_street || "-",
     city: address.city || staff?.current_city || staff?.permanent_city || "-",

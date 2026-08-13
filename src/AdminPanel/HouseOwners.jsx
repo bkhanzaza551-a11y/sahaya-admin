@@ -33,7 +33,7 @@ const getOwnerName = (owner) =>
   `${owner?.first_name || ""} ${owner?.last_name || ""}`.trim() || owner?.name || "House Owner";
 
 const getAddress = (owner) => {
-  const primaryAddress = owner?.addresses?.[0] || {};
+  const primaryAddress = owner?.addresses?.find(a => a.address_type === 'present') || owner?.addresses?.[0] || {};
   return {
     street: primaryAddress?.street || owner?.current_street || "-",
     city: primaryAddress?.city || owner?.current_city || "-",
@@ -58,7 +58,7 @@ const getCreditBalance = (owner) => {
 };
 
 const buildOwnerForm = (owner) => {
-  const address = owner?.addresses?.[0] || {};
+  const address = owner?.addresses?.find(a => a.address_type === 'present') || owner?.addresses?.[0] || {};
   return {
     first_name: owner?.first_name || "",
     last_name: owner?.last_name || "",
