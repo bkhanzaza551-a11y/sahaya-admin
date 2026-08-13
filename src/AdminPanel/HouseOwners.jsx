@@ -133,8 +133,10 @@ const HouseOwners = () => {
 
     try {
       const res = await axiosInstance.delete(`/admin/houseowners/${id}`);
-      if (res.data.success) {
+      if (res.data.success || res.data.status) {
         toast.success("House owner deleted successfully");
+        setOwners((prev) => prev.filter((owner) => owner.id !== id));
+        setFilteredOwners((prev) => prev.filter((owner) => owner.id !== id));
         fetchOwners();
       }
     } catch (error) {

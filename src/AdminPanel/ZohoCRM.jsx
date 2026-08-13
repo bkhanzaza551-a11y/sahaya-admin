@@ -660,8 +660,6 @@ const ZohoCRM = () => {
       </div>
 
       {/* STATS */}
-        <>
-          {/* STATS */}
           <div className="row g-3 mb-4">
             <div className="col-md-3">
               <div className="stat-card">

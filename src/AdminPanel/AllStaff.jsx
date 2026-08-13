@@ -444,9 +444,9 @@ const AllStaff = () => {
 
                         <div className="border rounded-3 p-3 bg-light">
                           <small className="text-muted d-block">Credit Balance</small>
-                          <div className="fw-bold">Rs. {getCreditBalance(selectedStaff).toFixed(2)}</div>
+                          <div className="fw-bold">₹ {getCreditBalance(selectedStaff).toFixed(2)}</div>
                           <small className="text-muted">
-                            Wallet: Rs. {Number(selectedStaff?.wallet || 0).toFixed(2)} | Referral: Rs. {Number(selectedStaff?.referral_earnings || 0).toFixed(2)}
+                            Wallet: ₹ {Number(selectedStaff?.wallet || 0).toFixed(2)} | Referral: ₹ {Number(selectedStaff?.referral_earnings || 0).toFixed(2)}
                           </small>
                         </div>
                       </div>

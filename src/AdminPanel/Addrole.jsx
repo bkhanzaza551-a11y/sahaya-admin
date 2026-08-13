@@ -129,6 +129,8 @@ const InlineSkillsPanel = ({ roleId }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newSkillInput, setNewSkillInput] = useState("");
+  const [editingSkillId, setEditingSkillId] = useState(null);
+  const [editingSkillName, setEditingSkillName] = useState("");
 
   const fetchSkills = async () => {
     setLoading(true);
@@ -188,6 +190,24 @@ const InlineSkillsPanel = ({ roleId }) => {
     }
   };
 
+  const handleUpdateSkill = async (id) => {
+    if (!editingSkillName.trim()) {
+      toast.warning("Skill name required");
+      return;
+    }
+    try {
+      await axiosInstance.post(`/category/update/${id}`, {
+        name: editingSkillName.trim(),
+      });
+      toast.success("Skill updated");
+      setEditingSkillId(null);
+      setEditingSkillName("");
+      fetchSkills();
+    } catch {
+      toast.error("Failed to update skill");
+    }
+  };
+
   return (
     <tr className="skills-row">
       <td colSpan={3} className="px-4 py-3">
@@ -206,15 +226,60 @@ const InlineSkillsPanel = ({ roleId }) => {
             )}
             {skills.map((s) => (
               <span key={s.id} className="skill-tag">
-                {s.name}
-                <button
-                  type="button"
-                  className="remove-skill"
-                  onClick={() => handleDeleteSkill(s.id, s.name)}
-                  title="Remove"
-                >
-                  ×
-                </button>
+                {editingSkillId === s.id ? (
+                  <input
+                    className="form-control form-control-sm d-inline-block"
+                    style={{ width: 120, fontSize: "0.82rem", padding: "2px 6px" }}
+                    value={editingSkillName}
+                    onChange={(e) => setEditingSkillName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleUpdateSkill(s.id);
+                      if (e.key === "Escape") setEditingSkillId(null);
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={() => {
+                      setEditingSkillId(s.id);
+                      setEditingSkillName(s.name);
+                    }}
+                    title="Double-click to edit"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {s.name}
+                  </span>
+                )}
+                {editingSkillId === s.id ? (
+                  <>
+                    <button
+                      type="button"
+                      className="remove-skill"
+                      style={{ color: "#047857" }}
+                      onClick={() => handleUpdateSkill(s.id)}
+                      title="Save"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      className="remove-skill"
+                      onClick={() => setEditingSkillId(null)}
+                      title="Cancel"
+                    >
+                      ×
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="remove-skill"
+                    onClick={() => handleDeleteSkill(s.id, s.name)}
+                    title="Remove"
+                  >
+                    ×
+                  </button>
+                )}
               </span>
             ))}
           </div>
@@ -257,6 +322,11 @@ const Addrole = () => {
   // Add-role modal state
   const [roleName, setRoleName] = useState("");
   const [modalSkills, setModalSkills] = useState([]); // skills typed before save
+
+  // Edit-role modal state
+  const [editingRole, setEditingRole] = useState(null);
+  const [editRoleName, setEditRoleName] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const modalRef = useRef(null);
 
@@ -346,6 +416,35 @@ const Addrole = () => {
     }
   };
 
+  /* ── edit role ──────────────────────────────────────────────────────────── */
+  const openEditModal = (role) => {
+    setEditingRole(role);
+    setEditRoleName(role.name);
+  };
+
+  const handleUpdateRole = async () => {
+    if (!editRoleName.trim()) {
+      toast.warning("Role name required");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      await axiosInstance.post(`/category/update/${editingRole.id}`, {
+        name: editRoleName.trim(),
+      });
+      toast.success("Role updated");
+      const modalEl = document.getElementById("editRoleModal");
+      const instance = window.bootstrap?.Modal?.getInstance(modalEl);
+      instance?.hide();
+      setEditingRole(null);
+      fetchRoles();
+    } catch {
+      toast.error("Failed to update role");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   /* ── render ──────────────────────────────────────────────────────────────── */
   return (
     <div className="container-fluid p-4" style={{ minHeight: "100vh" }}>
@@ -410,6 +509,13 @@ const Addrole = () => {
                           }
                         >
                           ⌄ Skills
+                        </button>
+
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => openEditModal(role)}
+                        >
+                          Edit
                         </button>
 
                         <button
@@ -498,6 +604,55 @@ const Addrole = () => {
                   </>
                 ) : (
                   "Save Role"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* EDIT ROLE MODAL */}
+      <div className="modal fade" id="editRoleModal">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content rounded-4">
+            <div className="modal-header border-0 pb-0">
+              <h5 className="fw-bold">Edit Role</h5>
+              <button className="btn-close" data-bs-dismiss="modal" />
+            </div>
+
+            <div className="modal-body pt-2">
+              <div className="mb-3">
+                <label className="fw-semibold mb-1">Role Name *</label>
+                <input
+                  className="form-control"
+                  value={editRoleName}
+                  onChange={(e) => setEditRoleName(e.target.value)}
+                  placeholder="e.g. Cook / Chef"
+                  onKeyDown={(e) => e.key === "Enter" && handleUpdateRole()}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer border-0 pt-0">
+              <button
+                className="btn btn-light"
+                data-bs-dismiss="modal"
+                onClick={() => setEditingRole(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn sahayya-btn-primary px-4"
+                onClick={handleUpdateRole}
+                disabled={editSaving}
+              >
+                {editSaving ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" />
+                    Updating…
+                  </>
+                ) : (
+                  "Update Role"
                 )}
               </button>
             </div>

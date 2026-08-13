@@ -36,11 +36,18 @@ const LegalConsentLogs = () => {
 
       const res = await axiosInstance.get("/admin/legal-consents", { params });
       if (res?.data?.success) {
-        setLogs(res.data.data.data);
+        setLogs(res.data.data.data || []);
         setPagination(res.data.data);
+      } else {
+        setLogs([]);
+        setPagination(null);
+        toast.error(res?.data?.message || "Failed to load consent logs");
       }
-    } catch {
-      toast.error("Failed to load consent logs");
+    } catch (error) {
+      console.log(error);
+      setLogs([]);
+      setPagination(null);
+      toast.error(error?.response?.data?.message || "Failed to load consent logs");
     } finally {
       setLoading(false);
     }

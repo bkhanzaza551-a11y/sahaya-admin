@@ -1,1 +1,1 @@
-export const BASE_URL = "https://sahayaa-backend-production.up.railway.app/api";
+export const BASE_URL = import.meta.env.VITE_API_URL || "https://sahayaa-backend-production.up.railway.app/api";

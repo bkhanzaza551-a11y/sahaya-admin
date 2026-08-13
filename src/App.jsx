@@ -26,8 +26,9 @@ import JobApplyLimits from "./AdminPanel/JobApplyLimits";
 import AdminUsers from "./AdminPanel/AdminUsers";
 import BlacklistManagement from "./AdminPanel/BlacklistManagement";
 import LegalConsentLogs from "./AdminPanel/LegalConsentLogs";
+import TrainingVideoManagement from "./AdminPanel/TrainingVideoManagement";
 import Unauthorized from "./AdminPanel/Unauthorized";
-import ZohoCRM from "./AdminPanel/ZohoCRM";
+
 import { hasModulePermission } from "./utiles/adminPermissions";
 
 
@@ -82,7 +83,8 @@ const AppWrapper = () => {
           <Route path="admin-users" element={<ProtectedAdminRoute moduleKey="sub_admins"><AdminUsers /></ProtectedAdminRoute>} />
           <Route path="settings" element={<ProtectedAdminRoute moduleKey="settings"><Settings /></ProtectedAdminRoute>} />
           <Route path="legal-consents" element={<ProtectedAdminRoute moduleKey="settings"><LegalConsentLogs /></ProtectedAdminRoute>} />
-          <Route path="zoho-crm" element={<ProtectedAdminRoute moduleKey="settings"><ZohoCRM /></ProtectedAdminRoute>} />
+          <Route path="training-videos" element={<ProtectedAdminRoute moduleKey="settings"><TrainingVideoManagement /></ProtectedAdminRoute>} />
+
 
 
         </Route>

@@ -9,7 +9,7 @@ const Sidebar = ({ onLinkClick }) => {
   const activePath = location.pathname;
 
   const loginDetails = JSON.parse(localStorage.getItem("login_details")) || {};
-  const email = loginDetails.email || "admin@sahayya.com";
+  const email = loginDetails.email || "Support@sahayya.co.in";
   const role = loginDetails.role || "Admin";
   const menuItems = useMemo(
     () => [
@@ -25,7 +25,8 @@ const Sidebar = ({ onLinkClick }) => {
       hasModulePermission("sub_admins") && ["/admin/admin-users", "fas fa-user-shield", "Admin Users"],
       hasModulePermission("settings") && ["/admin/settings", "fas fa-cog", "Settings"],
       hasModulePermission("settings") && ["/admin/legal-consents", "fas fa-file-signature", "Legal Consents"],
-      hasModulePermission("settings") && ["/admin/zoho-crm", "fas fa-address-book", "Zoho CRM"],
+      hasModulePermission("settings") && ["/admin/training-videos", "fas fa-play-circle", "Training Videos"],
+
 
       ["/", "fas fa-sign-out-alt", "Logout"],
     ].filter(Boolean),
