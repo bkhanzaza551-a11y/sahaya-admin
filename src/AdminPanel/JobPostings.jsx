@@ -197,6 +197,7 @@ const JobPostings = () => {
                 <th>Location</th>
                 <th>Salary</th>
                 <th>Commitment</th>
+                <th>Hires</th>
                 <th>Status</th>
                 <th className="text-end">Actions</th>
               </tr>
@@ -211,6 +212,11 @@ const JobPostings = () => {
                   <td>{formatCurrency(getCompensationValue(job))}</td>
                   <td>
                     <span className="badge bg-light text-dark">{job.commitment_type || "Not provided"}</span>
+                  </td>
+                  <td>
+                    <span className="badge bg-info-subtle text-info">
+                      {job.users_count || 0} {(job.users_count || 0) === 1 ? 'hire' : 'hires'}
+                    </span>
                   </td>
                   <td>
                     <span
