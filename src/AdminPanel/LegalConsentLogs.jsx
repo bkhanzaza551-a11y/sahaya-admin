@@ -3,8 +3,8 @@ import axiosInstance from "../utiles/axiosInstance";
 import { toast } from "react-toastify";
 
 const C = {
-  primary: "#024729",
-  accent: "#7AA80F",
+  primary: "#D98579",
+  accent: "#E8A99E",
   bg: "#f4f6f9",
   white: "#ffffff",
   border: "#e8edf2",

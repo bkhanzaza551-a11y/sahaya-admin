@@ -131,12 +131,12 @@ const SalaryManagement = () => {
         <div className="row g-3">
           <div className="col-md-4">
             <div className="input-group">
-              <span className="input-group-text bg-white border-end-0">
-                <i className="bi bi-search"></i>
+              <span className="input-group-text bg-white">
+                <i className="bi bi-search" style={{ opacity: 0.5 }}></i>
               </span>
               <input
                 type="text"
-                className="form-control border-start-0"
+                className="form-control"
                 placeholder="Search staff..."
                 value={filters.name}
                 onChange={(e) => setFilters((prev) => ({ ...prev, name: e.target.value }))}

@@ -46,16 +46,16 @@ const fmtCurrency = (n) =>
 
 /* ─── brand ─── */
 const C = {
-  primary:   "#024729",
-  accent:    "#7AA80F",
+  primary:   "#D98579",
+  accent:    "#E8A99E",
   bg:        "#f4f6f9",
   white:     "#ffffff",
   border:    "#e8edf2",
   textMain:  "#1a1a2e",
   textSub:   "#6b7280",
   textLight: "#9ca3af",
-  green100:  "#f0f9f1",
-  green200:  "#d9f0e1",
+  green100:  "#FFF5F3",
+  green200:  "#FFE8E4",
 };
 
 /* ─── line chart base options ─── */

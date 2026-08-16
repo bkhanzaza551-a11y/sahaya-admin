@@ -131,6 +131,7 @@ const StaffManagement = () => {
           <div className="col-md-3">
             <select
               className="form-select"
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All Status</option>
@@ -212,6 +213,16 @@ const StaffManagement = () => {
                         </button>
 
                         <ul className="dropdown-menu dropdown-menu-end">
+                          <li>
+                            <button
+                              className="dropdown-item text-primary"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewStaffModal"
+                              onClick={() => setSelectedStaff(staff)}
+                            >
+                              View Staff
+                            </button>
+                          </li>
                           <li>
                             <button
                               className="dropdown-item text-warning"

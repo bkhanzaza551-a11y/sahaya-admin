@@ -107,7 +107,7 @@
 .brand-icon {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, #024729, #7AA80F);
+    background: linear-gradient(135deg, #D98579, #E8A99E);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -129,7 +129,7 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #024729, #7AA80F);
+    background: linear-gradient(135deg, #D98579, #E8A99E);
     color: #fff;
     font-weight: 700;
     display: flex;
@@ -216,7 +216,7 @@
 .sidebar-brand-icon {
     width: 34px;
     height: 34px;
-    background: linear-gradient(135deg, #024729, #7AA80F);
+    background: linear-gradient(135deg, #D98579, #E8A99E);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -260,14 +260,14 @@
 }
 
 .sidebar-link:hover {
-    background: #f0f9f1;
-    color: #024729 !important;
+    background: #FFF5F3;
+    color: #D98579 !important;
 }
 
 .active-link {
-    background: linear-gradient(127deg, #024729 4%, #7AA80F 115%);
+    background: linear-gradient(127deg, #D98579 4%, #E8A99E 115%);
     color: #fff !important;
-    box-shadow: 0 4px 12px rgba(2, 71, 41, 0.25);
+    box-shadow: 0 4px 12px rgba(217, 133, 121, 0.25);
 }
 
 .active-link .sidebar-icon { background: rgba(255, 255, 255, 0.2) !important; } .active-link .sidebar-icon i { background: none !important; -webkit-text-fill-color: #fff !important; color: #fff !important; }
@@ -280,20 +280,20 @@
     height: 32px;
     flex-shrink: 0;
     border-radius: 8px;
-    background: #f0f9f1;
+    background: #FFF5F3;
     transition: background 0.25s;
 }
 
 .sidebar-icon i {
     font-size: 14px;
-    background: linear-gradient(127deg, #024729, #7AA80F);
+    background: linear-gradient(127deg, #D98579, #E8A99E);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
 .sidebar-link:hover .sidebar-icon {
-    background: #d9f0e1;
+    background: #FFE8E4;
 }
 
 .sidebar-label {
@@ -307,7 +307,7 @@
     gap: 10px;
     padding: 14px 16px;
     border-top: 1px solid #eef0f4;
-    background: #f8fdf9;
+    background: #FFF5F3;
     margin-top: auto;
 }
 
@@ -316,7 +316,7 @@
     height: 38px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #7AA80F;
+    border: 2px solid #E8A99E;
     flex-shrink: 0;
 }
 

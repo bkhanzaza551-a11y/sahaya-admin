@@ -361,7 +361,7 @@ textarea:focus {
 }
 
 .contactpage-info-panel {
-  background-color: #024729;
+  background-color: #D98579;
   color: #fff;
   padding: 3rem;
   border-radius: 10px;
@@ -494,7 +494,7 @@ textarea:focus {
 /* Left Panel */
 .login-left-panel {
   flex: 1;
-  background: linear-gradient(127.16deg, #024729 4.67%, #7AA80F 115.48%, #9BC308 123.46%, #C1E100 128.9%);
+  background: linear-gradient(127.16deg, #D98579 4.67%, #E8A99E 115.48%);
 
   display: flex;
   justify-content: center;
@@ -585,7 +585,7 @@ textarea:focus {
 .login-button {
   width: 100%;
   padding: 0.8rem;
-  background: linear-gradient(127.16deg, #024729 4.67%, #7AA80F 115.48%, #9BC308 123.46%, #C1E100 128.9%);
+  background: linear-gradient(127.16deg, #D98579 4.67%, #E8A99E 115.48%);
 
   color: white;
   border: none;
@@ -1167,9 +1167,9 @@ admin oanel css start */
 
 /* Header gradient like android figma */
 .mp-header {
-   background: linear-gradient(127.16deg, #024729 4.67%, #7AA80F 115.48%, #9BC308 123.46%, #C1E100 128.9%);
+   background: linear-gradient(127.16deg, #D98579 4.67%, #E8A99E 115.48%);
   color: #ffffff;
-  box-shadow: 0 6px 18px rgba(11, 61, 21, 0.06);
+  box-shadow: 0 6px 18px rgba(217, 133, 121, 0.06);
 }
 
 /* Avatar and user info */

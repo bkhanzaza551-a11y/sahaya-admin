@@ -117,7 +117,7 @@ const JobPostings = () => {
 
   const updateApplicationStatus = async (appId, status) => {
     try {
-      const response = await axiosInstance.post(`/admin/applications/${appId}/status`, { status });
+      const response = await axiosInstance.post(`/admin/applications/${appId}/status`, { application_status: status });
       if (response?.data?.status === "success" || response?.data?.success) {
         toast.success("Status updated");
         openJobApplications(selectedJobIdForApps);
@@ -366,25 +366,25 @@ const JobPostings = () => {
                             <td>{new Date(app.created_at).toLocaleDateString()}</td>
                             <td>
                               <span className={`badge ${
-                                app.status === 'accepted' || app.status === 'hired' ? 'bg-success' :
-                                app.status === 'rejected' ? 'bg-danger' :
+                                (app.application_status || app.status) === 'accepted' || (app.application_status || app.status) === 'hired' ? 'bg-success' :
+                                (app.application_status || app.status) === 'rejected' ? 'bg-danger' :
                                 'bg-warning text-dark'
                               }`}>
-                                {app.status || "pending"}
+                                {app.application_status || app.status || "pending"}
                               </span>
                             </td>
                             <td className="text-end">
                               <button 
                                 className="btn btn-sm btn-success me-2"
                                 onClick={() => updateApplicationStatus(app.id, 'accepted')}
-                                disabled={app.status === 'accepted' || app.status === 'hired'}
+                                disabled={(app.application_status || app.status) === 'accepted' || (app.application_status || app.status) === 'hired'}
                               >
                                 Accept
                               </button>
                               <button 
                                 className="btn btn-sm btn-danger"
                                 onClick={() => updateApplicationStatus(app.id, 'rejected')}
-                                disabled={app.status === 'rejected'}
+                                disabled={(app.application_status || app.status) === 'rejected'}
                               >
                                 Reject
                               </button>

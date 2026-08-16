@@ -22,7 +22,7 @@
 }
 
 .btn-add-plan {
-    background: linear-gradient(135deg, #024729 0%, #4caf50 100%);
+    background: linear-gradient(135deg, #D98579 0%, #E8A99E 100%);
     color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
@@ -33,13 +33,13 @@
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px rgba(2, 71, 41, 0.2);
+    box-shadow: 0 4px 15px rgba(217, 133, 121, 0.2);
 }
 
 .btn-add-plan:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(2, 71, 41, 0.3);
-    background: linear-gradient(135deg, #01351f 0%, #43a047 100%);
+    box-shadow: 0 6px 20px rgba(217, 133, 121, 0.3);
+    background: linear-gradient(135deg, #C76C60 0%, #D98579 100%);
 }
 
 /* Plan Cards */
@@ -77,7 +77,7 @@
     left: 0;
     width: 6px;
     height: 100%;
-    background: linear-gradient(to bottom, #024729, #7aa80f);
+    background: linear-gradient(to bottom, #D98579, #E8A99E);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -90,8 +90,8 @@
     position: absolute;
     top: 1.5rem;
     right: 1.5rem;
-    background: rgba(76, 175, 80, 0.1);
-    color: #4caf50;
+    background: rgba(217, 133, 121, 0.1);
+    color: #D98579;
     padding: 0.4rem 1rem;
     border-radius: 20px;
     font-size: 0.75rem;
@@ -226,7 +226,7 @@
 }
 
 .premium-modal .modal-header {
-    background: #024729;
+    background: #D98579;
     color: white;
     padding: 2rem;
     border: none;
@@ -263,8 +263,8 @@
 }
 
 .premium-input:focus {
-    border-color: #4caf50;
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+    border-color: #D98579;
+    box-shadow: 0 0 0 4px rgba(217, 133, 121, 0.1);
     background: white;
     outline: none;
 }
@@ -276,7 +276,7 @@
 }
 
 .btn-save-plan {
-    background: linear-gradient(135deg, #024729 0%, #4caf50 100%);
+    background: linear-gradient(135deg, #D98579 0%, #E8A99E 100%);
     color: white;
     width: 100%;
     padding: 1rem;
@@ -290,7 +290,7 @@
 
 .btn-save-plan:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(2, 71, 41, 0.2);
+    box-shadow: 0 10px 20px rgba(217, 133, 121, 0.2);
 }
 
 .btn-save-plan:disabled {
