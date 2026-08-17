@@ -19,7 +19,7 @@ const Sidebar = ({ onLinkClick }) => {
       hasModulePermission("jobs") && ["/admin/jobs", "fas fa-briefcase", "Job Postings"],
       hasModulePermission("roles") && ["/admin/addrole", "fas fa-user-tag", "Add Role"],
       hasModulePermission("membership") && ["/admin/membership", "fas fa-crown", "Membership"],
-      hasModulePermission("staff") && ["/admin/salary", "fas fa-money-check-dollar", "Salary Payouts"],
+      hasModulePermission("staff") && ["/admin/salary", "fas fa-money-bill-wave", "Salary Payouts"],
       hasModulePermission("reports") && ["/admin/reports", "fas fa-chart-bar", "Reports"],
       hasModulePermission("blacklist") && ["/admin/blacklist", "fas fa-user-slash", "Blacklist"],
       hasModulePermission("sub_admins") && ["/admin/admin-users", "fas fa-user-shield", "Admin Users"],
