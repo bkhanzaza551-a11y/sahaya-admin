@@ -370,9 +370,9 @@ const HouseOwners = () => {
 
                         <div className="border rounded-3 p-3 bg-light">
                           <small className="text-muted d-block">Credit Balance</small>
-                          <div className="fw-bold">Rs. {getCreditBalance(selectedOwner).toFixed(2)}</div>
+                          <div className="fw-bold">INR {getCreditBalance(selectedOwner).toFixed(2)}</div>
                           <small className="text-muted">
-                            Wallet: Rs. {Number(selectedOwner?.wallet || 0).toFixed(2)} | Referral: Rs. {Number(selectedOwner?.referral_earnings || 0).toFixed(2)}
+                            Wallet: INR {Number(selectedOwner?.wallet || 0).toFixed(2)} | Referral: INR {Number(selectedOwner?.referral_earnings || 0).toFixed(2)}
                           </small>
                         </div>
                       </div>

@@ -13,7 +13,7 @@ import { Bar, Doughnut } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
-const formatCurrency = (value) => `Rs. ${Number(value || 0).toFixed(2)}`;
+const formatCurrency = (value) => `INR ${Number(value || 0).toFixed(2)}`;
 
 const cardStyle = {
   border: "none",
