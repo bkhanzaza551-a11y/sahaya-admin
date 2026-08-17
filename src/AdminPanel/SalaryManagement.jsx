@@ -217,7 +217,7 @@ const SalaryManagement = () => {
                         <small className="text-muted">ID: {salary?.staff_id}</small>
                       </td>
                       <td>{salary?.payment_date || '-'}</td>
-                      <td className="fw-bold">₹{Number(salary?.net_salary || 0).toFixed(2)}</td>
+                      <td className="fw-bold">INR {Number(salary?.net_salary || 0).toFixed(2)}</td>
                       <td>{salary?.payment_mode || '-'}</td>
                       <td>{salary?.payment_date || '-'}</td>
                       <td>

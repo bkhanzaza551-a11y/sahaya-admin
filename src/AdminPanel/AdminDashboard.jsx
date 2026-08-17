@@ -38,7 +38,7 @@ const fmt = (n) =>
   Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
 const fmtCurrency = (n) =>
-  "₹ " +
+  "INR " +
   Number(n).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
