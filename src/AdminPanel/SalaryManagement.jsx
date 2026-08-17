@@ -207,7 +207,13 @@ const SalaryManagement = () => {
                       <td>{((pageData?.current_page || 1) - 1) * (pageData?.per_page || 10) + index + 1}</td>
                       <td>{salary?.houseowner?.name || salary?.houseowner?.first_name || 'N/A'}</td>
                       <td>
-                        <div className="fw-bold">{salary?.staff?.name || salary?.staff?.first_name || 'N/A'}</div>
+                        <div className="fw-bold">
+                          {salary?.staff
+                            ? ((salary.staff.first_name || salary.staff.last_name)
+                                ? `${salary.staff.first_name || ""} ${salary.staff.last_name || ""}`.trim()
+                                : (salary.staff.name || `Staff #${salary.staff_id}`))
+                            : `Staff #${salary.staff_id}`}
+                        </div>
                         <small className="text-muted">ID: {salary?.staff_id}</small>
                       </td>
                       <td>{salary?.payment_date || '-'}</td>
