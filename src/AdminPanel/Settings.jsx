@@ -9,6 +9,7 @@ const Settings = () => {
   const [pointsPerStaffReferral, setPointsPerStaffReferral] = useState("10");
   const [staffReferralPointsPerCredit, setStaffReferralPointsPerCredit] = useState("10");
   const [creditPurchasePrice, setCreditPurchasePrice] = useState("10");
+  const [referralNewUserBonus, setReferralNewUserBonus] = useState("10");
 
 
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,8 @@ const Settings = () => {
           setStaffReferralPointsPerCredit(referralPointsPerCredit.value);
         }
         if (creditPrice) setCreditPurchasePrice(creditPrice.value);
+        const newUserBonus = settings.find(s => s.key === "referral_new_user_bonus");
+        if (newUserBonus) setReferralNewUserBonus(newUserBonus.value);
       }
     } catch (error) {
       console.log("Failed to load settings", error);
@@ -77,6 +80,12 @@ const Settings = () => {
     }
     if (isNaN(cpPrice) || cpPrice <= 0) {
       setMessage("Credit purchase price must be greater than 0");
+      return;
+    }
+
+    const newUserBonus = parseInt(referralNewUserBonus, 10);
+    if (isNaN(newUserBonus) || newUserBonus < 0) {
+      setMessage("Referral new user bonus must be 0 or more");
       return;
     }
 
@@ -113,6 +122,10 @@ const Settings = () => {
           {
             key: "credit_purchase_price",
             value: creditPurchasePrice
+          },
+          {
+            key: "referral_new_user_bonus",
+            value: referralNewUserBonus
           }
         ]
       };
@@ -233,6 +246,25 @@ const Settings = () => {
             />
             <small className="text-muted">
               At the current values, one successful referral can redeem {referralCreditExample} job credit{referralCreditExample === 1 ? "" : "s"}. Incomplete points remain available for later redemption.
+            </small>
+          </div>
+
+          {/* REFERRAL NEW USER BONUS */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold">
+              Referral Signup Bonus (New User)
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="form-control"
+              placeholder="e.g. 10"
+              value={referralNewUserBonus}
+              onChange={(e) => setReferralNewUserBonus(e.target.value)}
+              required
+            />
+            <small className="text-muted">
+              Credits given directly to new user's wallet when they register using a referral code. Both parties get rewarded.
             </small>
           </div>
 
